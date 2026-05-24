@@ -1,0 +1,81 @@
+# ============================================================
+# Java / Maven
+# ============================================================
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+*.war
+
+# ============================================================
+# Frontend
+# ============================================================
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# ============================================================
+# Infra — secrets (only .env.example is committed)
+# ============================================================
+infra/.env
+
+# ============================================================
+# IDE / Editor
+# ============================================================
+.idea/
+*.iml
+.vscode/settings.json
+*.suo
+*.user
+*.swp
+*.swo
+
+# ============================================================
+# OS
+# ============================================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# ============================================================
+# Logs
+# ============================================================
+*.log
+logs/
+
+# ============================================================
+# AI / Agent tooling
+# Convention: TRACK shared config + memory vault (intentional).
+# IGNORE personal local overrides and runtime caches.
+# ============================================================
+
+# Claude Code — personal allowlist (each dev has their own)
+.claude/settings.local.json
+.claude/CLAUDE.local.md
+
+# Cursor — personal local overrides
+.cursor/AGENTS.local.md
+.cursor/.local/
+
+# Omnix — runtime caches and per-session memory (not shared)
+.omnix/memory/
+.omnix/cache/
+
+# .remember — session runtime logs (auto-generated, not shared)
+.remember/logs/
+
+# Obsidian app UI state (graph position, workspace layout) — not meaningful to track
+.obsidian-ai-memory/.obsidian/workspace.json
+.obsidian-ai-memory/.obsidian/graph.json
+.obsidian-ai-memory/.obsidian/cache
+.obsidian-ai-memory/.obsidian/*.bak
+
+# NOTE: The following are intentionally TRACKED (not ignored):
+# .claude/settings.json          ← shared hooks config
+# .cursor/rules/                 ← shared .mdc rules
+# .cursor/MEMORY-WORKFLOW.md     ← shared shutdown protocol
+# .cursor/agents/                ← shared agent recipes
+# .cursor/context/               ← shared context packs
+# .obsidian-ai-memory/           ← the engineering memory vault
+# AGENTS.md, CLAUDE.md, AI_RULES.md, STARTUP_PROTOCOL.md

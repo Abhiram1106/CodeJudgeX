@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: codejudgex
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/codejudgex}
+    username: ${DB_USER:codejudgex}
+    password: ${DB_PASS:secret}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASS:guest}
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-me-in-production}
+    expiration-ms: 86400000
+
+  judge0:
+    base-url: ${JUDGE0_URL:http://localhost:2358}
+    token: ${JUDGE0_TOKEN:}

@@ -1,0 +1,81 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cjx-postgres
+    environment:
+      POSTGRES_DB: codejudgex
+      POSTGRES_USER: codejudgex
+      POSTGRES_PASSWORD: secret
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: cjx-redis
+    ports:
+      - '6379:6379'
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: cjx-rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  judge0:
+    image: judge0/judge0:1.13.1
+    container_name: cjx-judge0
+    ports:
+      - '2358:2358'
+    privileged: true
+    depends_on:
+      - judge0-postgres
+      - judge0-redis
+    environment:
+      RAILS_ENV: production
+      REDIS_URL: redis://judge0-redis:6379
+      DATABASE_HOST: judge0-postgres
+      DATABASE_NAME: judge0
+      DATABASE_USER: judge0
+      DATABASE_PASSWORD: judge0secret
+
+  judge0-postgres:
+    image: postgres:13-alpine
+    container_name: cjx-judge0-postgres
+    environment:
+      POSTGRES_DB: judge0
+      POSTGRES_USER: judge0
+      POSTGRES_PASSWORD: judge0secret
+    volumes:
+      - judge0_pg_data:/var/lib/postgresql/data
+
+  judge0-redis:
+    image: redis:7-alpine
+    container_name: cjx-judge0-redis
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: cjx-prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cjx-grafana
+    ports:
+      - '3001:3000'
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:
+  judge0_pg_data:
