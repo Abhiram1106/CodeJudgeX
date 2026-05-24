@@ -1,0 +1,55 @@
+---
+description: Security rules — auto-loads on auth, middleware, JWT, secrets files
+globs:
+  - "backend/**/auth/**"
+  - "backend/**/security/**"
+  - "backend/**/config/**"
+  - "frontend/src/features/auth/**"
+  - "frontend/src/lib/axios.ts"
+  - "infra/.env*"
+alwaysApply: false
+---
+
+# Security Rules — CodeJudgeX
+
+## Authentication
+
+- JWT access tokens: short-lived (15 min default), HMAC-SHA256, secret from env only
+- Refresh tokens: long-lived, stored hashed in PostgreSQL, rotated on every use
+- BCrypt strength 12 minimum for all password hashing
+- Never log, print, or return password hashes or refresh token hashes
+- Logout must invalidate the refresh token in PostgreSQL
+
+## Authorization
+
+- Every protected Spring Boot endpoint annotated with `@PreAuthorize` or role check in service
+- Role hierarchy: STUDENT < FACULTY < ADMIN < SUPER_ADMIN
+- Hidden test cases: service layer must strip them before any student-facing response
+- Source code: students may only fetch their own submissions — enforce in service, not just controller
+- Admin endpoints: never accessible to STUDENT or FACULTY — enforce with `@PreAuthorize("hasRole('ADMIN')")`
+
+## Data protection
+
+- Never expose: `passwordHash`, `refreshTokenHash`, hidden test case `inputData`/`expectedOutput` to students, internal stack traces in error responses
+- Sensitive fields must be excluded from MapStruct response DTO mappings
+- No credentials in logs — mask any field named `password`, `token`, `secret`, `key`
+
+## API security
+
+- CORS: explicit allowlist only — never `*` in production
+- Rate limiting on: `/auth/login`, `/auth/register`, `/submissions` (POST), `/auth/refresh`
+- Parameterized queries always — Spring Data JPA + JPQL handles this; never string-concatenate into queries
+- Input validation at every controller boundary — reject before any business logic runs
+- HTTPS enforced in production — never transmit tokens over HTTP
+
+## Infrastructure
+
+- All secrets via environment variables — never hardcoded, never in `application.yml` literals
+- `infra/.env` is gitignored — only `infra/.env.example` is committed
+- Judge0 CE executes user code in a sandbox — Spring Boot must never `Runtime.exec()` or `ProcessBuilder` user-supplied code
+- Rotate any secret immediately if it touches a committed file — then audit git history
+
+## Incident rule
+
+Every security incident: write a postmortem entry in `.obsidian-ai-memory/03-ERRORS/error-memory.md`
+and promote the prevention rule to `.obsidian-ai-memory/03-ERRORS/anti-patterns.md`.

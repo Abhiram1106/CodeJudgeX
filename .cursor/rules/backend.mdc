@@ -1,0 +1,54 @@
+---
+description: Java/Spring Boot backend rules — auto-loads when working in backend/
+globs:
+  - "backend/**/*.java"
+  - "backend/pom.xml"
+  - "backend/src/main/resources/**"
+alwaysApply: false
+---
+
+# Backend Rules — CodeJudgeX (Java 21 + Spring Boot 3)
+
+## Architecture
+
+- Modular monolith. Root package: `com.codejudgex`.
+- 16 modules: auth, user, role, problem, testcase, contest, submission, evaluation,
+  leaderboard, plagiarism, notification, audit, admin, analytics, common, infrastructure.
+- Each module: `controller/` `dto/request/` `dto/response/` `entity/` `repository/` `service/` `mapper/` `exception/`
+
+## Non-negotiable rules
+
+- **Controllers are thin.** Validate request → delegate to service → return response DTO. No business logic in controllers.
+- **Never expose JPA entities in API responses.** Always map through `@Response` DTOs via MapStruct.
+- **Validate at the boundary.** `@Valid` on every controller method that accepts a request body. Use `@NotBlank`, `@Email`, `@Size`, `@Min`, `@Max`, `@Pattern`.
+- **Hidden test cases never appear in student-facing responses.** Enforce at the service layer, not just the controller.
+- **Async work goes through RabbitMQ.** Never block an API thread on code evaluation, plagiarism checks, or notification delivery.
+- **`@Transactional` on service methods** that touch multiple tables or require atomicity.
+- **Config from env vars only.** Use `${ENV_VAR:default}` in `application.yml`. Never hardcode connection strings, secrets, or ports.
+- **Structured logs with correlation ID** on every error log entry. Never log passwords, source code content, or hidden test case data.
+- **BCrypt strength ≥ 12** for all password hashing.
+- **JWT secrets from env only.** Never hardcode. Rotate immediately if exposed.
+
+## Module-specific rules
+
+**auth/** — Register, login, JWT access token + refresh token, logout, `/me`
+**submission/** — Save as QUEUED, publish to RabbitMQ, return 202 Accepted. Never evaluate synchronously.
+**evaluation/** — RabbitMQ `@RabbitListener`. Fetch submission → call Judge0 CE → compare output → calculate score → update leaderboard → publish notification.
+**leaderboard/** — Redis sorted sets for live rankings. PostgreSQL snapshots for history.
+**plagiarism/** — JPlag runs post-contest only, triggered via queue. Never block contest flow.
+
+## HTTP standards
+
+- `200 OK` for successful fetch/update
+- `201 Created` for resource creation
+- `202 Accepted` for async job acceptance (submissions, plagiarism checks)
+- `400 Bad Request` for validation failures
+- `401 Unauthorized` for missing/invalid JWT
+- `403 Forbidden` for role/permission failures
+- `404 Not Found` for missing resources
+- `409 Conflict` for duplicate resources
+- `429 Too Many Requests` for rate limit exceeded
+
+## Context pack
+
+For deeper backend context: `.cursor/context/backend-context.md`

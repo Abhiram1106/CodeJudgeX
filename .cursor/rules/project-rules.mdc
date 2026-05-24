@@ -1,0 +1,35 @@
+---
+description: CodeJudgeX universal project rules — loaded on every chat
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# Project Rules — CodeJudgeX
+
+## Identity
+
+CodeJudgeX is a competitive programming judge for academic institutions.
+Backend: Java 21 + Spring Boot 3 (modular monolith). Frontend: React 18 + Vite + TypeScript.
+It is NOT a microservices system, NOT a Next.js project, NOT a Python project.
+
+## Startup (mandatory before every response)
+
+1. Read `.obsidian-ai-memory/02-PROJECTS/session-continuity.md`
+2. Read `.obsidian-ai-memory/02-PROJECTS/project-context.md`
+3. Read `.obsidian-ai-memory/03-ERRORS/error-memory.md`
+4. Begin work — emit startup block
+
+## Non-negotiable rules
+
+- Memory read before any edit — no exceptions
+- Never repeat a known error — check error-memory.md first
+- No secrets in any file — ever
+- Confirm before: rm, DROP TABLE, force push, hard reset, production migrations
+- Verify before "done" — state test/typecheck result or explicitly state why not run
+- Write session digest after every meaningful session
+- Two-commit shutdown: code commit (feat/fix) + memory commit (memory: YYYY-MM-DD ...)
+
+## Shutdown
+
+Follow `.cursor/MEMORY-WORKFLOW.md` — all 10 steps. No abbreviations.

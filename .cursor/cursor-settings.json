@@ -1,0 +1,31 @@
+{
+  "alwaysInclude": [
+    ".obsidian-ai-memory/02-PROJECTS/session-continuity.md",
+    ".obsidian-ai-memory/02-PROJECTS/project-context.md",
+    ".obsidian-ai-memory/02-PROJECTS/active-goals.md",
+    ".obsidian-ai-memory/03-ERRORS/error-memory.md",
+    ".obsidian-ai-memory/03-ERRORS/anti-patterns.md",
+    ".cursor/MEMORY-WORKFLOW.md",
+    "AGENTS.md"
+  ],
+  "indexing": {
+    "include": [
+      "backend/src/**",
+      "frontend/src/**",
+      "infra/**",
+      "docs/**",
+      ".obsidian-ai-memory/02-PROJECTS/**",
+      ".obsidian-ai-memory/03-ERRORS/**",
+      ".obsidian-ai-memory/04-DECISIONS/**",
+      ".obsidian-ai-memory/05-ARCHITECTURE/**"
+    ],
+    "exclude": [
+      ".obsidian-ai-memory/01-SESSIONS/**",
+      ".obsidian-ai-memory/templates/**",
+      "backend/target/**",
+      "frontend/node_modules/**",
+      "frontend/dist/**",
+      ".git/**"
+    ]
+  }
+}

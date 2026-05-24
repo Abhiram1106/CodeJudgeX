@@ -1,0 +1,51 @@
+---
+description: React/TypeScript frontend rules — auto-loads when working in frontend/
+globs:
+  - "frontend/src/**/*.tsx"
+  - "frontend/src/**/*.ts"
+  - "frontend/src/**/*.css"
+  - "frontend/*.config.*"
+alwaysApply: false
+---
+
+# Frontend Rules — CodeJudgeX (React 18 + Vite + TypeScript)
+
+## Architecture
+
+- `src/app/` — entry point, providers, global CSS
+- `src/pages/` — route-level page components (thin, compose features)
+- `src/components/ui/` — shadcn/ui primitives (do not modify generated files)
+- `src/components/editor/` — Monaco editor wrapper
+- `src/components/layout/` — Sidebar, navbar, shell
+- `src/components/shared/` — reusable non-primitive components
+- `src/features/{name}/` — feature-scoped queries, mutations, hooks, local state
+- `src/services/` — all API call functions (typed, axios-based)
+- `src/lib/axios.ts` — the single axios instance with JWT interceptor
+- `src/hooks/` — shared custom React hooks
+- `src/store/` — Zustand global state (auth, UI preferences)
+- `src/types/` — TypeScript type definitions
+- `src/utils/` — pure utility functions
+
+## Non-negotiable rules
+
+- **TypeScript strict mode. No `any`.** If you must escape, add `// eslint-disable-next-line` with a comment explaining why.
+- **All API calls via `src/services/`** — never raw `axios.get()` or `fetch()` inside components.
+- **Server state via TanStack Query** — no manual `isLoading`, `error`, `data` state for server data.
+- **Forms via React Hook Form + Zod** — no manual form `useState`.
+- **shadcn/ui or Radix primitives** — do not build custom dropdowns, modals, tooltips, or selects from scratch.
+- **Monaco editor only** — do not substitute `<textarea>` or other editors for the code editor.
+- **`@/` path alias for all imports** — never use relative `../../` paths beyond one level.
+- **No `any` in service layer types** — every API response must have a typed interface in `src/types/`.
+- **No layout shift** — reserve space for images and async content before they load.
+- **Every interactive element must be keyboard-accessible.**
+
+## Submission status polling
+
+The submission API returns `202 Accepted` with a `submissionId`. The frontend must:
+1. Poll `GET /api/v1/submissions/{submissionId}` with TanStack Query `refetchInterval`
+2. Stop polling when `status` is a terminal state: `ACCEPTED`, `WRONG_ANSWER`, `TIME_LIMIT_EXCEEDED`, `MEMORY_LIMIT_EXCEEDED`, `RUNTIME_ERROR`, `COMPILATION_ERROR`, `EVALUATION_ERROR`
+3. Show a live status indicator while polling
+
+## Context pack
+
+For deeper frontend context: `.cursor/context/frontend-context.md`

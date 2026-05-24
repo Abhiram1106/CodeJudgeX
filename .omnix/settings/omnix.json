@@ -1,0 +1,10 @@
+{
+  "version": "0.1.0",
+  "projectName": "CodeJudgeX",
+  "defaultRetrievalMode": "balanced",
+  "adapters": ["generic", "claude", "cursor"],
+  "vaultPath": ".obsidian-ai-memory",
+  "digestAfterSession": true,
+  "errorMemoryEnabled": true,
+  "parallelTeamModeThreshold": 3
+}

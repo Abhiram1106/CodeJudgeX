@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [],
+    "deny": []
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"\n=== CodeJudgeX Shutdown Protocol (AGENTS.md) ===\n1. Write session digest → .obsidian-ai-memory/01-SESSIONS/YYYY-MM-DD/session-HHMM-claude.md\n2. Overwrite session-continuity.md\n3. Update active-goals.md checkboxes\n4. Append to error-memory.md if a bug was fixed\n5. Append to decisions.md if a non-trivial decision was made\n6. CODE COMMIT:   git add backend/ frontend/ infra/ docs/\n                  git commit -m 'feat|fix|refactor|docs(scope): description'\n7. MEMORY COMMIT: git add .obsidian-ai-memory/ AGENTS.md CLAUDE.md .claude/ .cursor/\n                  git commit -m 'memory: YYYY-MM-DD claude — summary'\n8. git push origin HEAD\n9. Final reply must include ## Memory block (digest path, commit hashes, push status)\n================================================\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"[CodeJudgeX] Pre-edit check: session-continuity.md + error-memory.md read this session?\""
+          }
+        ]
+      }
+    ]
+  }
+}

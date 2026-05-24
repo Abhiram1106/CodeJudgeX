@@ -1,0 +1,29 @@
+---
+description: Memory read and shutdown reminder — loaded on every chat
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# Memory & Session Protocol — CodeJudgeX
+
+## Before responding
+
+Read in order (stop when budget hit):
+
+1. `.obsidian-ai-memory/02-PROJECTS/session-continuity.md` — what the last session left off
+2. `.obsidian-ai-memory/02-PROJECTS/project-context.md` — stack, constraints, do-not-repeat
+3. `.obsidian-ai-memory/02-PROJECTS/active-goals.md` — current priorities
+4. `.obsidian-ai-memory/03-ERRORS/error-memory.md` — known bugs, never repeat
+5. `.obsidian-ai-memory/03-ERRORS/anti-patterns.md` — never-do patterns
+6. Last 1–3 digests in `.obsidian-ai-memory/01-SESSIONS/`
+
+## After meaningful work
+
+Execute all 10 steps in `.cursor/MEMORY-WORKFLOW.md`.
+
+Key steps summary:
+- Write digest → `01-SESSIONS/YYYY-MM-DD/session-HHMM-cursor.md`
+- Overwrite session-continuity.md (the rolling handoff)
+- Code commit + memory commit (always separate)
+- Push + include `## Memory` block in final reply

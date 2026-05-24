@@ -1,0 +1,41 @@
+---
+description: Testing rules — auto-loads on test files and test directories
+globs:
+  - "backend/src/test/**/*.java"
+  - "frontend/src/**/*.test.ts"
+  - "frontend/src/**/*.test.tsx"
+  - "frontend/src/**/*.spec.ts"
+  - "frontend/src/**/*.spec.tsx"
+alwaysApply: false
+---
+
+# Testing Rules — CodeJudgeX
+
+## Backend (JUnit 5 + Spring Boot Test)
+
+- Unit tests: no Spring context, no IO, no database — test service/mapper logic in isolation
+- Integration tests: use `@SpringBootTest` with a real PostgreSQL container (Testcontainers)
+- Every bug fix gets a regression test — add it before closing the task
+- One assertion per test where practical; one reason to fail per test always
+- No shared mutable state between tests — use `@BeforeEach` to reset
+- Mock at HTTP/queue boundaries (MockMvc, MockRabbitMQ) — never mock the class under test
+- Test class naming: `{ClassName}Test` for unit, `{ClassName}IT` for integration
+
+## Frontend (Vitest + Testing Library)
+
+- Query by role, label, or text — never by test ID unless no semantic alternative exists
+- No snapshot tests for interactive components — they catch nothing useful and break constantly
+- Test user behaviour, not implementation details — never assert on internal state
+- Every API call in tests must use `msw` (Mock Service Worker) handlers — never mock axios directly
+- Flaky tests are bugs — quarantine immediately, fix or delete. Never retry-to-green.
+
+## Evaluation pipeline testing
+
+- The evaluation worker must be tested with a real Judge0 CE instance (Docker Compose) in CI
+- Never mock Judge0 responses for integration tests — the actual sandbox behaviour is the contract
+- Test all terminal verdict types: ACCEPTED, WRONG_ANSWER, TIME_LIMIT_EXCEEDED, RUNTIME_ERROR, COMPILATION_ERROR
+
+## Coverage policy
+
+- Track coverage on `backend/src/main/java/com/codejudgex/{auth,submission,evaluation,leaderboard}/`
+- No coverage targets enforced — meaningful tests over line-coverage theatre
