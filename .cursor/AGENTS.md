@@ -47,3 +47,28 @@ Follow `.cursor/MEMORY-WORKFLOW.md` exactly — no abbreviations.
 - Never commit secrets — rotate immediately if one touches a file
 - Confirm before: `rm`, DROP TABLE, force push, hard reset, production migrations
 - Full rules: `AGENTS.md` at repo root
+
+## Commit rules (enforced — no exceptions)
+
+### VAULT COMMIT — AUTOMATIC, NO CONSENT NEEDED
+
+At every chat end, commit and push vault files **without asking the user**:
+
+```bash
+git add .obsidian-ai-memory/ AGENTS.md CLAUDE.md .claude/ .cursor/ .omnix/
+git commit -m "memory: YYYY-MM-DD HH:MM cursor — <summary>"
+git push origin HEAD
+```
+
+Do not ask. Do not wait for approval. Execute immediately.
+
+### CODE COMMIT — REQUIRES USER CONSENT
+
+Application files (`backend/`, `frontend/`, `infra/`, `docs/`) are **NEVER committed automatically**.
+
+Always ask: *"Ready to commit the code changes?"* before staging or committing these paths.
+
+### Two-commit rule
+
+Vault commits and code commits are always separate.
+`git log --grep="memory:"` must reconstruct every session cleanly.

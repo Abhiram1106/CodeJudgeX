@@ -6,5 +6,29 @@
   "vaultPath": ".obsidian-ai-memory",
   "digestAfterSession": true,
   "errorMemoryEnabled": true,
-  "parallelTeamModeThreshold": 3
+  "parallelTeamModeThreshold": 3,
+  "commitPolicy": {
+    "vaultAutoCommit": true,
+    "vaultAutoPush": true,
+    "vaultPaths": [
+      ".obsidian-ai-memory/",
+      "AGENTS.md",
+      "CLAUDE.md",
+      ".claude/",
+      ".cursor/",
+      ".omnix/"
+    ],
+    "codeRequiresConsent": true,
+    "codePaths": [
+      "backend/",
+      "frontend/",
+      "infra/",
+      "docs/"
+    ],
+    "commitMessageFormat": {
+      "vault": "memory: YYYY-MM-DD HH:MM {tool} — {summary}",
+      "code": "{type}({scope}): {subject}"
+    },
+    "twoCommitRule": true
+  }
 }

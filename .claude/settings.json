@@ -10,7 +10,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"\n=== CodeJudgeX Shutdown Protocol (AGENTS.md) ===\n1. Write session digest → .obsidian-ai-memory/01-SESSIONS/YYYY-MM-DD/session-HHMM-claude.md\n2. Overwrite session-continuity.md\n3. Update active-goals.md checkboxes\n4. Append to error-memory.md if a bug was fixed\n5. Append to decisions.md if a non-trivial decision was made\n6. CODE COMMIT:   git add backend/ frontend/ infra/ docs/\n                  git commit -m 'feat|fix|refactor|docs(scope): description'\n7. MEMORY COMMIT: git add .obsidian-ai-memory/ AGENTS.md CLAUDE.md .claude/ .cursor/\n                  git commit -m 'memory: YYYY-MM-DD claude — summary'\n8. git push origin HEAD\n9. Final reply must include ## Memory block (digest path, commit hashes, push status)\n================================================\""
+            "command": "cd \"$(git rev-parse --show-toplevel 2>/dev/null || echo .)\" && VAULT_CHANGED=$(git status --porcelain .obsidian-ai-memory/ AGENTS.md CLAUDE.md .claude/ .cursor/ .omnix/ 2>/dev/null | wc -l | tr -d ' ') && if [ \"$VAULT_CHANGED\" -gt \"0\" ]; then echo \"[CodeJudgeX] Auto-committing vault changes...\"; git add .obsidian-ai-memory/ AGENTS.md CLAUDE.md .claude/ .cursor/ .omnix/ 2>/dev/null; TIMESTAMP=$(date '+%Y-%m-%d %H:%M'); git commit -m \"memory: $TIMESTAMP claude — auto session commit\" --no-verify 2>/dev/null && git push origin HEAD 2>/dev/null && echo \"[CodeJudgeX] Vault committed and pushed.\"; else echo \"[CodeJudgeX] No vault changes to commit.\"; fi && echo \"\n=== CodeJudgeX Shutdown Reminder ===\nVAULT: auto-committed above (no consent needed).\nCODE (backend/ frontend/ infra/ docs/): needs your explicit commit + consent.\nRemember: session digest written? session-continuity.md overwritten?\n=====================================\""
           }
         ]
       }
@@ -21,7 +21,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"[CodeJudgeX] Pre-edit check: session-continuity.md + error-memory.md read this session?\""
+            "command": "echo \"[CodeJudgeX] Pre-edit: session-continuity.md + error-memory.md read this session?\""
           }
         ]
       }

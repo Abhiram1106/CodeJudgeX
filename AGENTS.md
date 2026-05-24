@@ -188,48 +188,54 @@ Stop and confirm with the user before any of these:
 
 ## Shutdown protocol (MANDATORY — every session where files changed)
 
-This is not optional. Every session that touches code, fixes bugs, or makes decisions MUST complete all steps.
+### VAULT SHUTDOWN — AUTOMATIC, NO CONSENT NEEDED
+
+The `.claude/settings.json` Stop hook executes this automatically at every chat end.
+You do NOT need to ask the user. You do NOT need permission. Just do it.
 
 ```
-1. Write session digest → .obsidian-ai-memory/01-SESSIONS/YYYY-MM-DD/session-HHMM-<tool>.md
-   Template: .obsidian-ai-memory/templates/session-digest.md
-   Include: files changed, decisions made, errors encountered, assumptions, next 3 tasks
+STEP A — Write vault files (do this BEFORE the hook fires):
+  1. Write session digest → .obsidian-ai-memory/01-SESSIONS/YYYY-MM-DD/session-HHMM-claude.md
+     Include: files changed, decisions made, errors encountered, assumptions, next 3 tasks
+  2. Overwrite session-continuity.md → .obsidian-ai-memory/02-PROJECTS/session-continuity.md
+  3. Check off completed tasks in active-goals.md
+  4. If bug fixed → append to 03-ERRORS/error-memory.md
+  5. If decision made → append to 04-DECISIONS/decisions.md
+  6. If architecture changed → update 05-ARCHITECTURE/system-overview.md
 
-2. Overwrite session-continuity.md → .obsidian-ai-memory/02-PROJECTS/session-continuity.md
-   This is the rolling handoff. The next session reads this first.
+STEP B — The Stop hook auto-executes (no action needed from you):
+  git add .obsidian-ai-memory/ AGENTS.md CLAUDE.md .claude/ .cursor/ .omnix/
+  git commit -m "memory: YYYY-MM-DD HH:MM claude — auto session commit"
+  git push origin HEAD
+```
 
-3. Update active-goals.md → check off completed tasks, uncheck anything reverted
+### CODE SHUTDOWN — REQUIRES USER CONSENT
 
-4. If a bug was fixed → append entry to .obsidian-ai-memory/03-ERRORS/error-memory.md
+Application files (backend/, frontend/, infra/, docs/) are NEVER committed automatically.
+Always ask the user before committing or pushing code changes.
 
-5. If a non-trivial decision was made → append to .obsidian-ai-memory/04-DECISIONS/decisions.md
+```
+STEP C — Ask user: "Ready to commit code changes?"
+  If yes:
+    git add backend/ frontend/ infra/ docs/
+    git commit -m "feat|fix|refactor|docs(scope): description"
+    git push origin HEAD   ← also ask before pushing code
+```
 
-6. If architecture changed → update .obsidian-ai-memory/05-ARCHITECTURE/system-overview.md
+### Final reply MUST include this block every session:
 
-7. CODE COMMIT — stage application files only:
-   git add backend/ frontend/ infra/ docs/ (not .obsidian-ai-memory/)
-   git commit -m "feat(module): description"   ← conventional commit, present tense
-
-8. MEMORY COMMIT — stage vault files only:
-   git add .obsidian-ai-memory/ AGENTS.md CLAUDE.md .claude/ .cursor/
-   git commit -m "memory: YYYY-MM-DD claude — summary of session"
-
-9. PUSH — git push origin HEAD
-   (confirm with user if pushing to a shared/main branch)
-
-10. Final reply MUST include this block:
-    ## Memory
-    - Digest: .obsidian-ai-memory/01-SESSIONS/YYYY-MM-DD/session-HHMM-claude.md
-    - Code commit: <hash> — <subject>
-    - Memory commit: <hash> — memory: ...
-    - Push: ✓ pushed to origin/main  (or: ✗ not pushed — reason)
+```
+## Memory
+- Digest: .obsidian-ai-memory/01-SESSIONS/YYYY-MM-DD/session-HHMM-claude.md
+- Vault commit: auto ✓ (Stop hook) — pushed to origin/main
+- Code commit: <hash> — <subject>  (or: pending user consent)
+- Next task: <one concrete next step from active-goals.md>
 ```
 
 **Two-commit rule — enforced:**
-- Code commit and memory commit are ALWAYS separate.
+- Vault commits and code commits are ALWAYS separate.
 - `git log --grep="memory:"` reconstructs every session handoff cleanly.
-- Application history must never be polluted with vault updates.
-- If you forget and mix them: do NOT amend — create a follow-up memory commit.
+- Application history is never polluted with vault updates.
 
 ---
 

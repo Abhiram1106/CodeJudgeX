@@ -42,16 +42,33 @@ Switch to `minimal` for one-liner answers or quick lookups.
 
 ---
 
-## End-of-session ## Memory block format (required in final reply)
+## Vault shutdown — AUTOMATIC, no consent needed
 
-Every session that changes files must end with this block in the final reply:
+At the end of every chat, the Stop hook in `.claude/settings.json` automatically:
+1. Stages all vault + config files (`.obsidian-ai-memory/`, `AGENTS.md`, `CLAUDE.md`, `.claude/`, `.cursor/`, `.omnix/`)
+2. Commits with `memory: YYYY-MM-DD HH:MM claude — auto session commit`
+3. Pushes to `origin HEAD`
+
+**You do not ask. You do not wait. It happens automatically.**
+
+Before the hook fires, you MUST have already written:
+- Session digest → `.obsidian-ai-memory/01-SESSIONS/YYYY-MM-DD/session-HHMM-claude.md`
+- Updated `session-continuity.md`
+- Checked off any completed tasks in `active-goals.md`
+- Appended to `error-memory.md` if a bug was fixed
+- Appended to `decisions.md` if a non-trivial decision was made
+
+## Code shutdown — REQUIRES USER CONSENT
+
+Application files (`backend/`, `frontend/`, `infra/`, `docs/`) are NEVER committed automatically.
+Always ask: *"Ready to commit the code changes?"* before staging or committing them.
+
+## Required ## Memory block in every final reply
 
 ```
 ## Memory
 - Digest: .obsidian-ai-memory/01-SESSIONS/YYYY-MM-DD/session-HHMM-claude.md
-- Code commit: <short-hash> — <subject>
-- Memory commit: <short-hash> — memory: YYYY-MM-DD claude — <summary>
-- Push: ✓ pushed to origin/main
+- Vault: auto-committed + pushed ✓ (Stop hook)
+- Code commit: <hash> — <subject>   |   pending user consent
+- Next task: <one line from active-goals.md>
 ```
-
-If push was not done, state why explicitly — do not silently omit it.

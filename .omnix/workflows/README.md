@@ -20,7 +20,8 @@ Triggered by: build / add / implement / create
 7. **Async check** — evaluation always via RabbitMQ; never synchronous Judge0 calls from controller
 8. **Verification** — `./mvnw compile` passes + `npm run typecheck` passes
 9. **Memory write** — session digest + update `session-continuity.md`
-10. **Commit** — code commit then separate memory commit
+10. **Vault commit (automatic)** — `git add .obsidian-ai-memory/ AGENTS.md CLAUDE.md .claude/ .cursor/ .omnix/` → commit → push. No consent needed.
+11. **Code commit (requires consent)** — ask user before staging `backend/ frontend/ infra/ docs/`
 
 ---
 
@@ -37,7 +38,8 @@ Triggered by: error / broken / crash / failing / exception
 5. **Root cause** — fix the origin, not the symptom
 6. **Regression test** — add a test that would have caught this
 7. **Memory write** — append to `error-memory.md`; promote pattern to `anti-patterns.md` if it could recur
-8. **Commit** — fix commit then separate memory commit
+8. **Vault commit (automatic)** — commit + push vault files immediately, no consent needed
+9. **Code commit (requires consent)** — ask user before committing fix to `backend/` or `frontend/`
 
 ---
 
@@ -73,7 +75,8 @@ Triggered by: deploy / ship / release
 5. `infra/docker-compose.yml` reflects any new service dependencies
 6. `README.md` updated if setup steps changed
 7. Session digest written with release summary
-8. Two-commit push: code then memory
+8. **Vault commit (automatic)** — commit + push `.obsidian-ai-memory/` and all agent configs immediately, no consent needed
+9. **Code commit (requires consent)** — ask user before committing `backend/ frontend/ infra/ docs/`
 
 ---
 
@@ -89,6 +92,8 @@ Triggered by: migration / schema / flyway / table
 4. **Co-update** — entity class + repository method + MapStruct mapper updated in same commit
 5. **Validate** — `ddl-auto=validate` will catch mismatches at startup; run backend to confirm
 6. **Decision log** — if schema design was non-trivial, append to `decisions.md`
+7. **Vault commit (automatic)** — commit + push vault files, no consent needed
+8. **Code commit (requires consent)** — ask user before committing migration + entity changes
 
 ---
 
