@@ -97,6 +97,44 @@ Triggered by: migration / schema / flyway / table
 
 ---
 
+---
+
+## END-OF-SESSION DIGEST — applies to ALL workflows above
+
+Every workflow's final step MUST output a session digest directly to the user in the chat reply.
+This is mandatory across all workflows (feature-build, debug, code-review, deployment, database).
+
+**Required digest format:**
+
+```markdown
+## Session Digest — YYYY-MM-DD
+
+### ✅ What was done this session
+- <every file written or changed, test run, bug fixed, decision made>
+
+### 🔧 What still needs to be done
+- <unchecked tasks from active-goals.md relevant to current week>
+
+### 🧪 What you should test / verify manually
+- <real curl commands, browser URLs, docker log greps — specific and actionable>
+
+### ⚠️ Open risks / known issues
+- <anything incomplete, broken, or unsafe — be honest>
+
+### 📋 Decisions made
+- <non-trivial choices this session — what and why>
+
+### 🚀 Recommended next step
+<one specific sentence — exact file or command to start with next session>
+```
+
+Rules:
+- Output this in the reply itself — the user reads this instead of opening vault files
+- "What to test" must have real commands, not vague statements
+- Do NOT skip for short sessions — every session with any change gets a digest
+
+---
+
 ## Adding workflow overrides
 
 Create a `.md` file in this directory named after the workflow to override.

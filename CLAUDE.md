@@ -63,6 +63,21 @@ Before the hook fires, you MUST have already written:
 Application files (`backend/`, `frontend/`, `infra/`, `docs/`) are NEVER committed automatically.
 Always ask: *"Ready to commit the code changes?"* before staging or committing them.
 
+## End-of-session digest — MANDATORY in every final reply
+
+Before anything else in your final reply, output the full session digest directly to the user.
+Full format and rules are in `AGENTS.md` → **END-OF-SESSION DIGEST** section.
+
+Short version of required sections:
+- **✅ What was done** — every file touched, test run, bug fixed
+- **🔧 What still needs to be done** — unchecked tasks from active-goals.md
+- **🧪 What to test manually** — real curl commands, URLs, log strings to grep
+- **⚠️ Open risks** — anything incomplete, broken, or unsafe
+- **📋 Decisions made** — non-trivial choices + reasoning
+- **🚀 Next step** — one specific sentence, not vague
+
+Do NOT skip this. Do NOT abbreviate it. The user reads this instead of opening vault files.
+
 ## Required ## Memory block in every final reply
 
 ```

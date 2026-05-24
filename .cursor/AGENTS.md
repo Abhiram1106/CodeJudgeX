@@ -14,9 +14,11 @@ Before any response or edit:
 6. Read 1–3 latest digests from `.obsidian-ai-memory/01-SESSIONS/`
 7. Emit startup block, then begin work
 
-## Shutdown (every meaningful chat)
+## Shutdown (every chat — no exceptions)
 
 Follow `.cursor/MEMORY-WORKFLOW.md` exactly — no abbreviations.
+
+**Critical:** The final reply MUST include a full session digest output directly in the chat (not just written to vault). The user reads the digest instead of opening vault files. See `.cursor/MEMORY-WORKFLOW.md` → Step 9 for the required format.
 
 ## Context packs (use @file to load)
 

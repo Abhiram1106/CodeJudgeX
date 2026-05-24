@@ -222,6 +222,52 @@ STEP C — Ask user: "Ready to commit code changes?"
     git push origin HEAD   ← also ask before pushing code
 ```
 
+### END-OF-SESSION DIGEST — MANDATORY IN EVERY FINAL REPLY
+
+Before the vault commit fires, you MUST output a full session digest directly in your final reply to the user. This is NOT optional. This is NOT just for long sessions. Every chat that touched any file gets a digest.
+
+The digest gives the user a complete picture WITHOUT them having to open any vault file.
+
+**Required format — output this verbatim in your final message:**
+
+```
+## Session Digest — YYYY-MM-DD
+
+### ✅ What was done this session
+- <bullet per meaningful action — file written, bug fixed, decision made, test run>
+- ...
+
+### 🔧 What still needs to be done (from active-goals.md)
+- <bullet per unchecked task relevant to current week>
+- ...
+
+### 🧪 What you should test / verify manually
+- <specific curl commands, browser URLs, Docker checks, Swagger endpoints to hit>
+- Example: POST /api/v1/auth/register with {name, email, password} → expect 201 + access token
+- Example: docker compose logs backend | grep "Flyway" → expect "Successfully applied 9 migrations"
+- ...
+
+### ⚠️ Open risks / known issues
+- <anything that is incomplete, unsafe, or needs attention before going further>
+- ...
+
+### 📋 Decisions made
+- <any non-trivial choice made this session — what and why>
+- ...
+
+### 🚀 Recommended next step
+<one concrete sentence — exactly what to do first in the next session>
+```
+
+**Rules for the digest:**
+- "What was done" must list every file written or changed — not just a module name
+- "What to test" must be actionable: real URLs, real curl commands, real log strings to grep
+- "Open risks" must be honest — if something is broken or incomplete, say so explicitly
+- "Next step" must be specific — not "continue Week 2" but "implement Judge0Client.java per ROADMAP Week 2"
+- Do NOT summarize vaguely. The user reads this digest instead of opening the vault.
+
+---
+
 ### Final reply MUST include this block every session:
 
 ```

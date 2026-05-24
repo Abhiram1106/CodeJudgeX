@@ -94,9 +94,43 @@ git commit -m "feat|fix|refactor|docs(scope): description"
 git push origin HEAD
 ```
 
-### Step 9 — Final reply
+### Step 9 — Final reply (digest + memory block)
 
-Every final reply MUST include a `## Memory` block:
+Every final reply MUST start with a **full session digest** for the user, followed by the `## Memory` block.
+
+**Session digest format (required, output directly in reply — not just in vault):**
+
+```markdown
+## Session Digest — YYYY-MM-DD
+
+### ✅ What was done this session
+- <every file written or changed, test run, bug fixed, decision made>
+
+### 🔧 What still needs to be done
+- <unchecked tasks from active-goals.md relevant to current week>
+
+### 🧪 What you should test / verify manually
+- <real curl commands, browser URLs, Docker log greps — be specific>
+- Example: POST /api/v1/auth/register → expect 201 + access token in response
+- Example: docker compose logs backend | grep "Flyway" → expect "Successfully applied N migrations"
+
+### ⚠️ Open risks / known issues
+- <anything incomplete, broken, or requiring attention before next step>
+
+### 📋 Decisions made
+- <non-trivial choices this session — what and why>
+
+### 🚀 Recommended next step
+<one specific sentence — exact file or command to start with next session>
+```
+
+Rules:
+- "What was done" lists every file touched — not just module names
+- "What to test" must be actionable — real commands, not vague descriptions
+- "Open risks" must be honest — if something is broken, say so
+- Do NOT skip this because the session was short or "simple"
+
+Then append the memory block:
 
 ```markdown
 ## Memory
