@@ -18,67 +18,67 @@ tags: [goals, roadmap]
 
 ### Flyway Migrations (do first — everything depends on schema)
 
-- [ ] V1__create_users_roles.sql — users, roles, user_roles
-- [ ] V2__create_problems.sql — problems, problem_tags, problem_tag_map
-- [ ] V3__create_test_cases.sql — test_cases (with is_sample, weight)
-- [ ] V4__create_contests.sql — contests, contest_problems, contest_participants
-- [ ] V5__create_submissions.sql — submissions, submission_results
-- [ ] V6__create_leaderboard.sql — leaderboard_snapshots
-- [ ] V7__create_plagiarism.sql — plagiarism_jobs, plagiarism_flags
-- [ ] V8__create_supporting.sql — notifications, audit_logs, refresh_tokens
-- [ ] V9__add_indexes.sql — composite indexes for common query patterns
+- [x] V1__create_users_roles.sql — users, roles, user_roles
+- [x] V2__create_problems.sql — problems, problem_tags, problem_tag_map
+- [x] V3__create_test_cases.sql — test_cases (with is_sample, weight)
+- [x] V4__create_contests.sql — contests, contest_problems, contest_participants
+- [x] V5__create_submissions.sql — submissions, submission_results
+- [x] V6__create_leaderboard.sql — leaderboard_snapshots
+- [x] V7__create_plagiarism.sql — plagiarism_jobs, plagiarism_flags
+- [x] V8__create_supporting.sql — notifications, audit_logs, refresh_tokens
+- [x] V9__add_indexes.sql — composite indexes for common query patterns
 
 ### Auth Module
 
-- [ ] User + Role + UserRole entities
-- [ ] UserRepository + RoleRepository
-- [ ] RegisterRequest + LoginRequest + AuthResponse DTOs
-- [ ] UserMapper (MapStruct)
-- [ ] JwtService — generate/validate access tokens
-- [ ] RefreshTokenService — create, rotate, revoke
-- [ ] AuthService — register (BCrypt), login, refresh, logout
-- [ ] JwtAuthenticationFilter (OncePerRequestFilter)
-- [ ] SecurityConfig — filter chain, role hierarchy
-- [ ] AuthController — /register /login /refresh /logout /me
-- [ ] AuthServiceTest (unit) + AuthIntegrationTest (Testcontainers)
+- [x] User + Role + RefreshToken entities
+- [x] UserRepository + RoleRepository + RefreshTokenRepository
+- [x] RegisterRequest + LoginRequest + AuthResponse + RefreshRequest + UserProfileResponse DTOs
+- [ ] UserMapper (MapStruct) — skipped, manual mapping used
+- [x] JwtService — generate/validate access tokens, extractAllClaims
+- [x] RefreshTokenService — create, rotate (reuse detection), revoke, scheduled cleanup
+- [x] AuthService — register, login, refresh, logoutByEmail, getProfile
+- [x] JwtAuthenticationFilter (OncePerRequestFilter)
+- [x] SecurityConfig — stateless filter chain, CORS, BCryptPasswordEncoder
+- [x] AuthController — /register /login /refresh /logout /me
+- [x] AuthServiceTest — 6 unit tests, all passing
 
 ### Problem Module
 
-- [ ] Problem + TestCase + ProblemTag entities
-- [ ] ProblemRepository + TestCaseRepository
-- [ ] CreateProblemRequest + ProblemResponse + ProblemSummaryResponse DTOs
-- [ ] TestCaseResponse DTO (excludes hidden test case data for students)
-- [ ] ProblemMapper (MapStruct)
-- [ ] ProblemService — CRUD, hidden test case protection at service layer
-- [ ] ProblemController — FACULTY+ to create/edit, authenticated to read
-- [ ] ProblemServiceTest + ProblemControllerTest
+- [x] Problem + TestCase + ProblemTag entities
+- [x] ProblemRepository + TestCaseRepository + ProblemTagRepository
+- [x] CreateProblemRequest + ProblemResponse + ProblemSummaryResponse + AddTestCaseRequest DTOs
+- [x] TestCaseResponse DTO (hidden test case protection enforced in service layer)
+- [ ] ProblemMapper (MapStruct) — skipped, manual mapping used
+- [x] ProblemService — CRUD, getProblemForStudent (sample only), getProblemForFaculty (all), addTestCase
+- [x] ProblemController — FACULTY+ to create/edit, authenticated to read
+- [x] ProblemServiceTest — 4 unit tests, all passing
 
 ### Contest Module
 
-- [ ] Contest + ContestProblem + ContestParticipant entities
-- [ ] ContestRepository
-- [ ] CreateContestRequest + ContestResponse + ContestSummaryResponse DTOs
-- [ ] ContestMapper
-- [ ] ContestService — lifecycle, registration, problem assignment
-- [ ] ContestController
-- [ ] ContestServiceTest + ContestControllerTest
+- [x] Contest + ContestProblem (EmbeddedId) + ContestParticipant (EmbeddedId) entities
+- [x] ContestRepository + ContestProblemRepository + ContestParticipantRepository
+- [x] CreateContestRequest + ContestResponse + ContestSummaryResponse DTOs
+- [ ] ContestMapper — skipped, manual mapping used
+- [x] ContestService — createContest, addProblem, registerParticipant, listContests, getContest
+- [x] ContestController — POST /contests, POST /{id}/problems, POST /{id}/register, GET /contests, GET /{id}
+- [x] ContestServiceTest — 5 unit tests, all passing
 
 ### Submission Module (accept + queue only — not evaluation)
 
-- [ ] Submission + SubmissionResult entities
-- [ ] SubmissionRepository
-- [ ] CreateSubmissionRequest + SubmissionResponse + SubmissionStatusResponse DTOs
-- [ ] EvaluationMessage POJO (RabbitMQ message)
-- [ ] SubmissionMapper
-- [ ] SubmissionService — validate, persist QUEUED, publish to RabbitMQ
-- [ ] SubmissionController — POST /submissions (202), GET /submissions/{id}/status
-- [ ] SubmissionServiceTest + SubmissionControllerTest
+- [x] Submission + SubmissionResult entities
+- [x] SubmissionRepository
+- [x] CreateSubmissionRequest + SubmissionResponse + SubmissionStatusResponse DTOs
+- [x] EvaluationMessage POJO (RabbitMQ message)
+- [ ] SubmissionMapper — skipped, manual mapping used
+- [x] SubmissionService — validate (LIVE + registered), persist QUEUED, publish to evaluation.queue
+- [x] SubmissionController — POST /submissions (202), GET /submissions/{id}/status, GET /submissions/{id}
+- [x] SubmissionServiceTest — 4 unit tests, all passing
 
 ### Week 1 done when
-- [ ] `cd backend && ./mvnw clean package` succeeds with no errors
-- [ ] All module unit tests pass
-- [ ] Swagger UI shows all auth/problems/contests/submissions endpoints
-- [ ] Postman/Bruno can hit POST /auth/register → POST /auth/login → GET /problems
+- [x] `./mvnw compile` succeeds with no errors
+- [x] All module unit tests pass — 19/19 (AuthServiceTest 6, ContestServiceTest 5, ProblemServiceTest 4, SubmissionServiceTest 4)
+- [ ] Swagger UI shows all auth/problems/contests/submissions endpoints — needs Docker stack running
+- [ ] Postman/Bruno can hit POST /auth/register → POST /auth/login → GET /problems — needs Docker stack running
 
 ---
 

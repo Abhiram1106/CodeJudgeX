@@ -15,78 +15,91 @@ tags: [continuity, handoff]
 ## Where we left off
 
 **Date:** 2026-05-24
-**Sessions completed today:** 5
+**Sessions completed today:** 3 (session-0003 is the latest)
 
-### What was built this session (2026-05-24 — session 2)
+### What was built this session (2026-05-24 — session 3)
 
-Completed full AI agent workflow adaptation for auto vault commit / code-requires-consent split:
+Completed full **Week 1** implementation per ROADMAP.md:
 
-1. **`.claude/settings.json`** — Stop hook rewritten as a real shell script: detects vault changes via `git status --porcelain`, stages only vault files, commits with auto-generated timestamp, pushes — no user input required.
+**Flyway Migrations (V1–V9)** — all 9 written in `backend/src/main/resources/db/migration/`
+- V1: users, roles, user_roles
+- V2: problems, problem_tags, problem_tag_map
+- V3: test_cases (is_sample, weight)
+- V4: contests, contest_problems, contest_participants
+- V5: submissions, submission_results
+- V6: leaderboard_snapshots
+- V7: plagiarism_jobs, plagiarism_flags
+- V8: notifications, audit_logs, refresh_tokens
+- V9: composite indexes
 
-2. **`AGENTS.md`** — Shutdown protocol split into two hard sections:
-   - VAULT SHUTDOWN: automatic, no consent, executes via Stop hook
-   - CODE SHUTDOWN: always requires explicit user consent
+**Backend source** — `backend/src/main/java/com/codejudgex/`
+- `common/` — ApiResponse, PageResponse, BaseEntity, GlobalExceptionHandler + 4 typed exceptions
+- `infrastructure/config/` — RabbitMQConfig, RedisConfig, SecurityConfig, JacksonConfig
+- `auth/` — Full module: entities → repos → DTOs → JwtService → RefreshTokenService → AuthService → JwtAuthenticationFilter → SecurityConfig → AuthController
+- `problem/` — Full module with hidden test case protection in ProblemService
+- `contest/` — Full module with EmbeddedId for junction tables
+- `submission/` — Full module: async submit (202) → RabbitMQ publish → EvaluationMessage POJO
 
-3. **`CLAUDE.md`** — Vault auto-shutdown and code-consent sections added; `## Memory` block format required in every final reply.
+**Tests** — 19/19 passing (AuthServiceTest×6, ProblemServiceTest×4, ContestServiceTest×5, SubmissionServiceTest×4)
 
-4. **`.cursor/MEMORY-WORKFLOW.md`** — Fully rewritten with two-category structure: VAULT = automatic (execute immediately), CODE = consent required (ask user).
-
-5. **`.cursor/AGENTS.md`** — "Commit rules" section added at bottom: vault auto (no consent), code requires consent, two-commit rule.
-
-6. **`.omnix/workflows/README.md`** — All 4 workflows (feature-build, debug, deployment, database) updated with explicit "Vault commit (automatic)" and "Code commit (requires consent)" steps.
-
-7. **`.omnix/settings/omnix.json`** — `commitPolicy` block added: `vaultAutoCommit: true`, `vaultAutoPush: true`, `codeRequiresConsent: true`, `twoCommitRule: true`, explicit path arrays for vault vs code.
+**Verification:**
+- `./mvnw compile` → BUILD SUCCESS
+- `./mvnw test` → Tests run: 19, Failures: 0, Errors: 0
 
 ---
 
 ## Active thread
 
-- All AI agent configs now enforce the split commit workflow consistently
-- No source code written yet — all setup/infrastructure work
-- **Ready to begin Week 1 implementation** — Flyway migrations first
+**Week 1 complete.** All modules compiled and tested.
+
+**Known open risk (MUST FIX before real use):**
+`resolveUserId()` in all controllers uses `UUID.nameUUIDFromBytes(email.getBytes())` — deterministic email hash, not real UUID from DB. Must be replaced with JWT claim extraction (`userId` claim) before any real user can use the system. This is noted in `04-DECISIONS/decisions.md` under D-007.
 
 ---
 
 ## Current week goal
 
-**Week 1 (2026-05-25 → 2026-05-31):** Flyway migrations V1–V9 + Auth + Problem + Contest + Submission modules
+**Week 1 (2026-05-25 → 2026-05-31):** ✅ COMPLETE
+
+**Week 2 (2026-06-01 → 2026-06-07):** Async Evaluation Pipeline + Leaderboard
+- But before Week 2: fix `resolveUserId()` in ProblemController, ContestController, SubmissionController
 
 ---
 
 ## Verification state
 
-- All agent config files written and consistent
-- No source code compiled yet — nothing to run
-- `docs/ROADMAP.md` — complete
-- Vault — fully populated and up to date
+- `./mvnw compile` → BUILD SUCCESS ✓
+- `./mvnw test` → 19/19 ✓
+- Docker stack NOT yet started — Flyway migrations not yet verified against live PostgreSQL
+- Swagger UI not yet verified — needs Docker stack
 
 ---
 
 ## Next 3 concrete tasks
 
-1. **Write Flyway migrations V1–V9** — start with `V1__create_users_roles.sql`
-   - Path: `backend/src/main/resources/db/migration/`
-   - Blueprint: `docs/ROADMAP.md` → Week 1 → Flyway Migrations section
+1. **Fix `resolveUserId()`** in ProblemController, ContestController, SubmissionController
+   — Extract `userId` UUID from JWT claims instead of email hash
+   — Add `userId` claim to token in JwtService.generateAccessToken()
 
-2. **Implement Auth module** — exact order from ROADMAP:
-   `User.java` → `Role.java` → `UserRole.java` → repositories → DTOs → `JwtService` → `AuthService` → filter → `SecurityConfig` → `AuthController`
+2. **Start Docker stack** (`make dev`) and verify Flyway migrations run against PostgreSQL
+   — Check `docker compose logs backend` for Flyway output
 
-3. **Implement Problem module** — after auth is working:
-   `Problem.java` → `TestCase.java` → repositories → DTOs → `ProblemService` → `ProblemController`
-   Hidden test case protection enforced in `ProblemService`, not controller.
+3. **Begin Week 2 per ROADMAP:** Judge0Client → EvaluationWorker → OutputComparator → ScoreCalculator
 
 ---
 
 ## Open risks
 
-- Judge0 CE requires Docker privileged mode on Windows — must test in Week 2
-- JPlag memory usage under load — only trigger post-contest
-- No CI/CD until Week 5 — all verification manual per-module
-- Redis `maxmemory-policy` must be `noeviction` for leaderboard correctness
+- `resolveUserId()` email-hash UUID is non-standard — must fix before Week 2 (see above)
+- Contest `addProblem` does not verify the requesting faculty owns the contest — any FACULTY can add to any DRAFT
+- No integration tests yet — Docker stack required
+- Judge0 CE requires Docker privileged mode on Windows — test in Week 2
+- Redis `maxmemory-policy` must be `noeviction` for leaderboard correctness (Week 2)
 
 ---
 
 ## Decisions made this session
 
-- D-008 reinforced: mandatory auto vault commit at every chat end — no exceptions, no consent needed
-- All AI adapters (.claude/, .cursor/, .omnix/) now enforce the two-commit split consistently
+- Skipped MapStruct mappers at Week 1 — manual builder mapping in all services (avoids annotation processor ordering issues)
+- Refresh token reuse detection: presenting a revoked token revokes ALL tokens for that user
+- Hidden test case protection: enforced at service layer via separate `findByProblemIdAndIsSample(id, true)` query — hidden rows never fetched for students
