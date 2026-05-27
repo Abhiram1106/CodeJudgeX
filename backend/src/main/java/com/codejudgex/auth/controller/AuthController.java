@@ -12,18 +12,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.access.prepost.PreAuthorize;
-
-import java.security.Principal;
 
 @RestController
 @RequestMapping("/auth")
@@ -55,30 +52,30 @@ public class AuthController {
     @PostMapping("/logout")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Revoke all refresh tokens for the authenticated user")
-    public ApiResponse<Void> logout(@AuthenticationPrincipal Principal principal) {
-        authService.logoutByEmail(resolveEmail(principal));
+    public ApiResponse<Void> logout(Authentication authentication) {
+        authService.logoutByEmail(resolveEmail(authentication));
         return ApiResponse.success(null, "Logged out successfully");
     }
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get the authenticated user's profile")
-    public ApiResponse<UserProfileResponse> me(@AuthenticationPrincipal Principal principal) {
-        return ApiResponse.success(authService.getProfile(resolveEmail(principal)));
+    public ApiResponse<UserProfileResponse> me(Authentication authentication) {
+        return ApiResponse.success(authService.getProfile(resolveEmail(authentication)));
     }
 
     /**
-     * After the JWT filter fix, principal.getName() is the userId UUID.
-     * The email is stored as the credentials on UsernamePasswordAuthenticationToken.
+     * After the JWT filter fix, authentication.getName() is the userId UUID string.
+     * The email is stored as credentials on UsernamePasswordAuthenticationToken.
+     * In tests (@WithMockUser), credentials is null — getName() returns the mock username.
      */
-    private String resolveEmail(Principal principal) {
-        if (principal instanceof UsernamePasswordAuthenticationToken token) {
+    private String resolveEmail(Authentication authentication) {
+        if (authentication instanceof UsernamePasswordAuthenticationToken token) {
             Object credentials = token.getCredentials();
-            if (credentials instanceof String email) {
+            if (credentials instanceof String email && !email.isBlank()) {
                 return email;
             }
         }
-        // Fallback (e.g. in unit tests without JWT filter)
-        return principal.getName();
+        return authentication.getName();
     }
 }

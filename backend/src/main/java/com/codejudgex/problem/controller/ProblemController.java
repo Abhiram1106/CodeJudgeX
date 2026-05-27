@@ -16,7 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,8 +43,8 @@ public class ProblemController {
     @Operation(summary = "Create a new problem (FACULTY+)")
     public ApiResponse<ProblemResponse> create(
             @Valid @RequestBody CreateProblemRequest request,
-            @AuthenticationPrincipal Principal principal) {
-        UUID createdBy = resolveUserId(principal);
+            Authentication authentication) {
+        UUID createdBy = resolveUserId(authentication);
         return ApiResponse.success(problemService.createProblem(request, createdBy), "Problem created");
     }
 
@@ -80,8 +79,8 @@ public class ProblemController {
     public ApiResponse<TestCaseResponse> addTestCase(
             @PathVariable UUID id,
             @Valid @RequestBody AddTestCaseRequest request,
-            @AuthenticationPrincipal Principal principal) {
-        return ApiResponse.success(problemService.addTestCase(id, request, resolveUserId(principal)));
+            Authentication authentication) {
+        return ApiResponse.success(problemService.addTestCase(id, request, resolveUserId(authentication)));
     }
 
     @GetMapping("/{id}/test-cases")
@@ -91,7 +90,7 @@ public class ProblemController {
         return ApiResponse.success(problemService.getProblemForFaculty(id).getSampleTestCases());
     }
 
-    private UUID resolveUserId(Principal principal) {
-        return UUID.fromString(principal.getName());
+    private UUID resolveUserId(Authentication authentication) {
+        return UUID.fromString(authentication.getName());
     }
 }
