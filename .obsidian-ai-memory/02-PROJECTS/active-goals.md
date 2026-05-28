@@ -85,18 +85,20 @@ tags: [goals, roadmap]
 ## Week 2 — Async Evaluation Pipeline + Leaderboard
 **Period:** 2026-06-01 → 2026-06-07
 
-- [ ] RabbitMQ exchange + queue config (evaluation, retry, dlq, notification, plagiarism)
-- [ ] Redis key setup (leaderboard ZSET, status cache, rate limit)
-- [ ] Judge0Client — REST wrapper for Judge0 CE API
-- [ ] EvaluationWorker — RabbitMQ consumer, calls Judge0, compares output, scores
-- [ ] OutputComparator — trim/normalize/compare
-- [ ] ScoreCalculator — sum of weights of passing test cases
-- [ ] Retry logic (3 attempts) + DLQ handling + INTERNAL_ERROR on terminal failure
-- [ ] LeaderboardService — Redis ZADD/ZREVRANGE/ZREVRANK + PG snapshot
-- [ ] LeaderboardController — GET /leaderboards/contests/{id}
-- [ ] NotificationWorker — consume notification.queue, persist in-app + MailHog email
-- [ ] NotificationController — GET /notifications, PATCH /{id}/read
-- [ ] EvaluationIntegrationTest — full async flow with Testcontainers
+- [x] RabbitMQ exchange + queue config (evaluation, retry, dlq, notification, plagiarism)
+- [x] Redis key setup (leaderboard ZSET)
+- [x] Judge0Client — REST wrapper for Judge0 CE API
+- [x] EvaluationWorker — RabbitMQ consumer, calls Judge0, compares output, scores
+- [x] OutputComparator — trim/normalize/compare (8 unit tests)
+- [x] ScoreCalculator — sum of weights of passing test cases (7 unit tests)
+- [x] Retry logic (3 attempts) + DLQ handling + INTERNAL_ERROR on terminal failure
+- [x] LeaderboardService — Redis ZADD/ZREVRANGE/ZREVRANK + PG snapshot (5 unit tests)
+- [x] LeaderboardController — GET /leaderboards/contests/{id} + /me
+- [x] NotificationWorker — consume notification.queue, persist in-app + MailHog email
+- [x] NotificationController — GET /notifications, PATCH /{id}/read
+- [x] MockMvc tests for AuthController (7), ContestController (4), ProblemController (4), SubmissionController (5)
+- [x] V10 migration — verdict/weight/memoryUsedKb on submission_results
+- [ ] EvaluationIntegrationTest — full async flow with Testcontainers (deferred to Week 5)
 
 ### Week 2 done when
 - [ ] Submit Java code → QUEUED → RUNNING → ACCEPTED/WRONG_ANSWER (end-to-end)
