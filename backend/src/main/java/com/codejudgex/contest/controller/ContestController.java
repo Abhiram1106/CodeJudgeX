@@ -14,7 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
 import java.util.UUID;
 
 @RestController
@@ -41,9 +40,9 @@ public class ContestController {
     @Operation(summary = "Create a new contest (FACULTY+)")
     public ApiResponse<ContestResponse> create(
             @Valid @RequestBody CreateContestRequest request,
-            @AuthenticationPrincipal Principal principal) {
+            Authentication authentication) {
         return ApiResponse.success(
-                contestService.createContest(request, resolveUserId(principal)), "Contest created");
+                contestService.createContest(request, resolveUserId(authentication)), "Contest created");
     }
 
     @PostMapping("/{id}/problems")
@@ -52,8 +51,8 @@ public class ContestController {
     public ApiResponse<ContestResponse> addProblem(
             @PathVariable UUID id,
             @RequestParam UUID problemId,
-            @AuthenticationPrincipal Principal principal) {
-        return ApiResponse.success(contestService.addProblem(id, problemId, resolveUserId(principal)));
+            Authentication authentication) {
+        return ApiResponse.success(contestService.addProblem(id, problemId, resolveUserId(authentication)));
     }
 
     @PostMapping("/{id}/register")
@@ -61,8 +60,8 @@ public class ContestController {
     @Operation(summary = "Register as a participant (STUDENT)")
     public ApiResponse<Void> register(
             @PathVariable UUID id,
-            @AuthenticationPrincipal Principal principal) {
-        contestService.registerParticipant(id, resolveUserId(principal));
+            Authentication authentication) {
+        contestService.registerParticipant(id, resolveUserId(authentication));
         return ApiResponse.success(null, "Registered successfully");
     }
 
@@ -84,7 +83,7 @@ public class ContestController {
         return ApiResponse.success(contestService.getContest(id));
     }
 
-    private UUID resolveUserId(Principal principal) {
-        return UUID.fromString(principal.getName());
+    private UUID resolveUserId(Authentication authentication) {
+        return UUID.fromString(authentication.getName());
     }
 }

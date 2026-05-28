@@ -11,7 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
 import java.util.UUID;
 
 @RestController
@@ -37,8 +36,8 @@ public class SubmissionController {
     @Operation(summary = "Submit code — returns 202 immediately, evaluation is async")
     public ApiResponse<SubmissionResponse> submit(
             @Valid @RequestBody CreateSubmissionRequest request,
-            @AuthenticationPrincipal Principal principal) {
-        return ApiResponse.success(submissionService.submit(request, resolveUserId(principal)));
+            Authentication authentication) {
+        return ApiResponse.success(submissionService.submit(request, resolveUserId(authentication)));
     }
 
     @GetMapping("/{id}/status")
@@ -53,11 +52,11 @@ public class SubmissionController {
     @Operation(summary = "Get full submission detail (own submissions only for STUDENT)")
     public ApiResponse<SubmissionResponse> get(
             @PathVariable UUID id,
-            @AuthenticationPrincipal Principal principal) {
-        return ApiResponse.success(submissionService.getSubmission(id, resolveUserId(principal)));
+            Authentication authentication) {
+        return ApiResponse.success(submissionService.getSubmission(id, resolveUserId(authentication)));
     }
 
-    private UUID resolveUserId(Principal principal) {
-        return UUID.fromString(principal.getName());
+    private UUID resolveUserId(Authentication authentication) {
+        return UUID.fromString(authentication.getName());
     }
 }
