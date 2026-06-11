@@ -1,12 +1,4 @@
-.PHONY: infra-up infra-down backend frontend lint test
-
-## Start all infrastructure services
-infra-up:
-	docker compose -f infra/docker-compose.yml up -d
-
-## Stop all infrastructure services
-infra-down:
-	docker compose -f infra/docker-compose.yml down
+.PHONY: backend frontend lint test
 
 ## Run backend (dev)
 backend:

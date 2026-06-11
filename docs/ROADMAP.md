@@ -4,7 +4,7 @@
 > This document is the authoritative build plan. Agents read it at session start to understand what to build next, in what order, and why.
 >
 > **Timeline:** 5 weeks · 2026-05-25 → 2026-06-28
-> **Stack:** Java 21 + Spring Boot 3.3 · React 18 + Vite · PostgreSQL · Redis · RabbitMQ · Judge0 CE · Docker Compose
+> **Stack:** Java 21 + Spring Boot 3.3 · React 18 + Vite · PostgreSQL · Redis · RabbitMQ · Judge0 CE (remote/hosted) — local services, no Docker
 
 ---
 
@@ -26,12 +26,12 @@ The project is complete when ALL of these are true:
 - [ ] Score and verdict are stored in PostgreSQL and leaderboard updates in Redis
 - [ ] A faculty member can create problems, add hidden test cases, create a contest, and view submissions
 - [ ] An admin can manage users, view audit logs, and trigger plagiarism checks
-- [ ] The full stack runs with `docker compose up --build`
+- [ ] The full stack runs locally with PostgreSQL, Redis, and RabbitMQ as native services and a Judge0 CE remote/hosted instance
 - [ ] Swagger UI documents every API endpoint
+- [ ] `./mvnw clean package` and `npm run build` both succeed with no errors
 - [ ] Unit tests cover auth, submission, evaluation, and leaderboard logic
 - [ ] Integration tests cover the full submission → evaluation → result flow
-- [ ] Prometheus + Grafana show queue depth, verdict distribution, and API latency
-- [ ] `./mvnw clean package` and `npm run build` both succeed with no errors
+- [ ] Spring Boot Actuator exposes queue health, verdict metrics, and API latency
 
 ---
 
@@ -397,7 +397,7 @@ Language IDs:
 - Implementation: `RateLimitInterceptor.java` using `RedisTemplate.opsForValue().increment()`
 
 **CORS configuration:**
-- Allow: `http://localhost:5173` (Vite dev), `http://localhost:80` (Nginx prod)
+- Allow: `http://localhost:5173` (Vite dev), production frontend origin (configured via env var)
 - Disallow: `*` in any environment
 
 **Security headers (via Spring Security):**
@@ -537,7 +537,7 @@ Content-Security-Policy: default-src 'self'
 
 #### Observability
 
-**Custom Prometheus metrics (add to `infrastructure` module):**
+**Custom metrics via Spring Boot Actuator + Micrometer (add to `infrastructure` module), exposed at `/actuator/prometheus` for optional external scraping:**
 ```java
 // Counters
 submissions_total{status="ACCEPTED|WRONG_ANSWER|..."}
@@ -552,13 +552,10 @@ evaluation_duration_seconds
 api_request_duration_seconds{endpoint, method}
 ```
 
-**Grafana dashboard provisioning (`infra/grafana/provisioning/dashboards/`):**
-- Panel: Submission throughput (rate over time by status)
-- Panel: RabbitMQ queue depth (evaluation.queue messages_ready)
-- Panel: Evaluation duration P50/P95/P99
-- Panel: API error rate (4xx, 5xx)
-- Panel: JVM heap usage
-- Panel: Active contests count
+**Health and metrics available without any extra setup:**
+- `/actuator/health` — overall app, DB, Redis, RabbitMQ health indicators
+- `/actuator/metrics` — JVM heap, request latency, custom counters/gauges above
+- `/actuator/prometheus` — Prometheus-format scrape endpoint (optional external Prometheus/Grafana can point here)
 
 #### Integration Tests
 
@@ -578,64 +575,21 @@ ContestLifecycleIntegrationTest:
   - create contest → add problems → register student → submit → leaderboard updates
 ```
 
-#### Dockerfiles
-
-**`backend/Dockerfile`:**
-```dockerfile
-FROM eclipse-temurin:21-jre-alpine
-WORKDIR /app
-COPY target/*.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
-```
-
-**`frontend/Dockerfile`:**
-```dockerfile
-FROM node:20-alpine AS build
-WORKDIR /app
-COPY package*.json .
-RUN npm ci
-COPY . .
-RUN npm run build
-
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-```
-
-#### Nginx configuration (`infra/nginx/default.conf`)
-
-```nginx
-upstream backend { server backend:8080; }
-
-server {
-    listen 80;
-    root /usr/share/nginx/html;
-    index index.html;
-
-    location /api/ { proxy_pass http://backend; }
-    location /swagger-ui/ { proxy_pass http://backend; }
-    location / { try_files $uri $uri/ /index.html; }
-}
-```
-
 #### GitHub Actions CI (`/github/workflows/`)
 
 **`backend-ci.yml`:** checkout → setup Java 21 → `./mvnw test` → `./mvnw clean package -DskipTests`
 **`frontend-ci.yml`:** checkout → setup Node 20 → `npm ci` → `npm run typecheck` → `npm run lint` → `npm run build`
-**`docker-ci.yml`:** checkout → `docker compose build` → validate compose config
 
 #### Final polish checklist
 - [ ] All `TODO` comments removed or linked to a GitHub issue
 - [ ] No hardcoded values — all via env vars (verify with `grep -r "localhost" src/`)
 - [ ] `infra/.env.example` has every required variable with description
 - [ ] Swagger UI accessible at `/swagger-ui.html` with all endpoints documented
-- [ ] README quick-start works from a fresh clone: `docker compose up --build`
+- [ ] README quick-start works from a fresh clone using local services (PostgreSQL, Redis, RabbitMQ) and a Judge0 CE remote/hosted instance
 - [ ] `./mvnw clean package` succeeds (no test failures)
 - [ ] `npm run build` succeeds (no type errors, no lint errors)
 
-**Week 5 done when:** `docker compose up --build` starts all services, full contest lifecycle works end-to-end, Grafana dashboard loads with real data, CI pipeline goes green.
+**Week 5 done when:** backend and frontend run against local PostgreSQL, Redis, and RabbitMQ services plus a Judge0 CE remote/hosted instance, full contest lifecycle works end-to-end, `/actuator/health` and `/actuator/prometheus` report correctly, CI pipeline goes green.
 
 ---
 
@@ -643,12 +597,12 @@ server {
 
 | Risk | Probability | Impact | Mitigation |
 |---|---|---|---|
-| Judge0 CE requires Docker privileged mode on Windows | High | High | Test early in Week 2; configure Docker Desktop to allow privileged containers |
+| Judge0 CE has no practical non-Docker local install | High | High | Use a remote/hosted Judge0 instance (e.g. Judge0 RapidAPI) configured via `JUDGE0_URL` + `JUDGE0_TOKEN`; test early in Week 2 |
 | JPlag memory usage on large contest (>500 submissions) | Medium | Medium | Run JPlag async via queue; set JVM heap limit on worker; defer to Week 3 |
 | RabbitMQ message loss on worker crash | Medium | High | durable queues + manual ack + idempotent consumer (check submission status before processing) |
 | Redis eviction during contest causing leaderboard loss | Low | High | Set `maxmemory-policy noeviction` for leaderboard Redis; PG snapshot every 5 min |
 | Frontend polling overwhelming API under load | Medium | Medium | `/submissions/{id}/status` endpoint cached in Redis (TTL 2s); stop polling on terminal status |
-| No CI/CD until Week 5 | Certain | Low | Manual test each module at end of its week against running Docker stack |
+| No CI/CD until Week 5 | Certain | Low | Manual test each module at end of its week against locally running services |
 | Monaco editor SSR/Vite chunk size | Low | Low | Lazy-load Monaco with `React.lazy` + `Suspense`; specify `height` always |
 
 ---

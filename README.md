@@ -11,7 +11,6 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docs.docker.com/compose/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 <br/>
@@ -42,7 +41,7 @@ The platform is architected as a **modular monolith with asynchronous workers**,
 | **Similarity Detection** | Post-contest JPlag integration flags suspiciously similar submissions for faculty review |
 | **Real-Time Leaderboard** | Redis-powered live rankings updated instantly after each evaluation |
 | **Full Auditability** | Every significant action is logged with actor, timestamp, and metadata |
-| **Production Observability** | Prometheus metrics + Grafana dashboards expose system health, queue depth, and JVM internals |
+| **Production Observability** | Spring Actuator exposes health, metrics, and JVM internals |
 
 ---
 
@@ -79,14 +78,14 @@ CodeJudgeX follows a **Modular Monolith + Async Worker** pattern — purpose-bui
          │  Rate Limiting     │    └──────────────┬──────────────────┘
          └───────────────────┘                    │
                                     ┌─────────────▼──────────────────┐
-                                    │          Judge0 CE              │
+                                    │     Judge0 CE (remote/hosted)   │
                                     │  Compile · Execute · Sandbox    │
                                     │  Time Limit · Memory Limit      │
                                     └────────────────────────────────┘
 
          ┌────────────────────────────────────────────────────────┐
          │                   Observability Layer                   │
-         │         Prometheus · Grafana · Spring Actuator          │
+         │              Spring Actuator (health, metrics)          │
          └────────────────────────────────────────────────────────┘
 ```
 
@@ -191,9 +190,8 @@ Notification event published → Student notified
 - Multi-language code execution (Java, C++, Python, JavaScript, and all Judge0-supported languages)
 - Paginated, filterable REST API with consistent response envelopes
 - Swagger/OpenAPI documentation auto-generated at `/swagger-ui`
-- Prometheus metrics exposed at `/actuator/prometheus`
-- Grafana dashboards for API health, queue depth, JVM metrics, and error rates
-- Docker Compose-based local deployment for the entire platform
+- Health and metrics exposed via Spring Actuator at `/actuator/health` and `/actuator/prometheus`
+- Runs on natively installed local services — no Docker required
 
 ---
 
@@ -211,7 +209,7 @@ Notification event published → Student notified
 | Migrations | Flyway | — |
 | Cache / Leaderboard | Redis (Spring Data Redis) | 7 |
 | Message Broker | RabbitMQ (Spring AMQP) | 3 |
-| Code Execution | Judge0 CE (self-hosted) | 1.13 |
+| Code Execution | Judge0 CE (remote/hosted instance) | 1.13 |
 | Similarity Detection | JPlag | — |
 | Mapping | MapStruct | 1.5 |
 | Boilerplate reduction | Lombok | — |
@@ -240,11 +238,10 @@ Notification event published → Student notified
 
 | Component | Technology |
 |---|---|
-| Containerization | Docker + Docker Compose |
-| Metrics Collection | Prometheus |
-| Visualization | Grafana |
-| Email (dev) | MailHog |
-| Reverse Proxy (optional) | Nginx |
+| PostgreSQL, Redis, RabbitMQ | Native local service installs |
+| Code execution | Judge0 CE (remote/hosted instance) |
+| Metrics | Spring Boot Actuator |
+| Email (dev) | Local SMTP debug server (e.g. MailHog) |
 
 ---
 
@@ -316,11 +313,7 @@ CodeJudgeX/
 │       └── utils/                        # Formatting, validation helpers
 │
 ├── infra/                                # Infrastructure configuration
-│   ├── docker-compose.yml                # Full local stack definition
-│   ├── .env.example                      # Environment variable template
-│   ├── prometheus/
-│   │   └── prometheus.yml                # Scrape config targeting Spring Boot
-│   └── grafana/                          # Dashboard provisioning (future)
+│   └── .env.example                      # Environment variable template
 │
 ├── docs/                                 # Architecture and design documents
 │   ├── architecture.md                   # System architecture decisions
@@ -367,10 +360,37 @@ module-name/
 | Maven | 3.9 |
 | Node.js | 20 |
 | npm | 10 |
-| Docker | 24 |
-| Docker Compose | 2.20 |
+| PostgreSQL | 16 |
+| Redis | 7 |
+| RabbitMQ | 3 |
 
-### 1. Clone and Configure
+CodeJudgeX runs entirely on natively installed local services — no Docker required.
+
+### 1. Install Local Services
+
+Install PostgreSQL 16, Redis 7, and RabbitMQ 3 for your OS:
+
+- **Windows**: install via the official installers, or `choco install postgresql redis-64 rabbitmq`
+- **macOS**: `brew install postgresql@16 redis rabbitmq`
+- **Linux (apt)**: `sudo apt install postgresql-16 redis-server rabbitmq-server`
+
+Start each service (Windows: via Services console or `net start`; macOS/Linux: `brew services start <name>` or `systemctl start <name>`).
+
+Create the application database and user:
+
+```bash
+psql -U postgres -c "CREATE DATABASE codejudgex;"
+psql -U postgres -c "CREATE USER codejudgex WITH PASSWORD 'secret';"
+psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE codejudgex TO codejudgex;"
+```
+
+RabbitMQ and Redis work out of the box with their default ports (5672 / 6379) and the default `guest`/`guest` RabbitMQ credentials for local development.
+
+### 2. Configure Judge0 CE
+
+Judge0 CE is required for code execution. Use a hosted Judge0 instance (e.g. the [Judge0 RapidAPI](https://rapidapi.com/judge0-official/api/judge0-ce) free tier) or any Judge0 server you already run elsewhere — point `JUDGE0_URL` (and `JUDGE0_TOKEN` if required) at it.
+
+### 3. Clone and Configure
 
 ```bash
 git clone https://github.com/your-org/CodeJudgeX.git
@@ -381,17 +401,10 @@ cp infra/.env.example infra/.env
 
 # Edit infra/.env and set at minimum:
 # JWT_SECRET=<256-bit random string>
+# JUDGE0_URL / JUDGE0_TOKEN (see step 2)
 ```
 
-### 2. Start Infrastructure
-
-```bash
-make infra-up
-```
-
-This starts PostgreSQL, Redis, RabbitMQ, Judge0 CE, Prometheus, and Grafana via Docker Compose. Wait approximately 30 seconds for all services to initialize.
-
-### 3. Run the Backend
+### 4. Run the Backend
 
 ```bash
 make backend
@@ -399,9 +412,9 @@ make backend
 cd backend && ./mvnw spring-boot:run
 ```
 
-The API will start on `http://localhost:8080`. Swagger UI is available at `http://localhost:8080/swagger-ui`.
+The API will start on `http://localhost:8080`. Swagger UI is available at `http://localhost:8080/swagger-ui`. Flyway runs migrations automatically on startup.
 
-### 4. Install Frontend Dependencies
+### 5. Install Frontend Dependencies
 
 ```bash
 make frontend-install
@@ -409,7 +422,7 @@ make frontend-install
 cd frontend && npm install
 ```
 
-### 5. Run the Frontend
+### 6. Run the Frontend
 
 ```bash
 make frontend
@@ -426,8 +439,6 @@ The frontend will start on `http://localhost:5173` and proxy all `/api` requests
 | Frontend | http://localhost:5173 | — |
 | Backend API | http://localhost:8080 | — |
 | Swagger UI | http://localhost:8080/swagger-ui | — |
-| Prometheus | http://localhost:9090 | — |
-| Grafana | http://localhost:3001 | admin / admin |
 | RabbitMQ Management | http://localhost:15672 | guest / guest |
 
 ---
@@ -579,11 +590,11 @@ CodeJudgeX uses a four-tier role system enforced at the controller layer on ever
 
 ## Observability
 
-CodeJudgeX ships with a complete observability stack out of the box.
+CodeJudgeX exposes built-in health and metrics via Spring Boot Actuator — no separate monitoring stack required.
 
-### Metrics (Prometheus + Grafana)
+### Metrics
 
-Spring Boot Actuator exposes metrics at `/actuator/prometheus`. Prometheus scrapes this endpoint every 15 seconds. Grafana visualizes:
+Spring Boot Actuator exposes Prometheus-formatted metrics at `/actuator/prometheus`, which can optionally be scraped by an external Prometheus instance if desired:
 
 - API request rate, latency, and error rate by endpoint
 - RabbitMQ queue depth (evaluation queue, notification queue, DLQ)
@@ -620,8 +631,6 @@ Audit logs are queryable by admin with filtering on actor, action type, and time
 ### Available Make Targets
 
 ```bash
-make infra-up           # Start all Docker Compose services
-make infra-down         # Stop all Docker Compose services
 make backend            # Run Spring Boot in dev mode
 make frontend           # Run Vite dev server
 make frontend-install   # Install npm dependencies
@@ -630,6 +639,8 @@ make backend-build      # Build production JAR (skip tests)
 make backend-test       # Run backend test suite
 make build              # Full production build (backend + frontend)
 ```
+
+PostgreSQL, Redis, and RabbitMQ must be running as local services before starting the backend (see [Quick Start](#quick-start)).
 
 ### Backend Module Conventions
 
@@ -709,8 +720,6 @@ All design documents live in [`docs/`](docs/):
 - [ ] Monaco editor integration
 - [ ] Submission status polling
 - [ ] Admin analytics dashboard
-- [ ] Grafana dashboard provisioning
-- [ ] Nginx reverse proxy configuration
 - [ ] MailHog integration for dev email
 
 ---
