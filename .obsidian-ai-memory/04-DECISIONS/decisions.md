@@ -104,3 +104,18 @@ tags: [decisions, adr]
 - **Context:** Previously the shutdown protocol existed but git push was "optional" and the `## Memory` block was not enforced. Sessions were completing without vault state being committed, making recovery across tool switches unreliable.
 - **Why:** The vault is only useful as a handoff mechanism if it is committed and pushed. An uncommitted session-continuity.md is invisible to the next session on a different machine or tool.
 - **Rule:** No session is "done" until `git push origin HEAD` has executed and the final reply contains the `## Memory` block with commit hashes and push status.
+
+---
+
+## D-009 — Remove Docker entirely; Omnix dropped as an AI tool adapter
+
+- **Date:** 2026-06-11
+- **Status:** Active
+- **Decision:** The project no longer uses Docker in any form. All infrastructure (PostgreSQL, Redis, RabbitMQ) runs as natively installed local services. Judge0 CE — which has no practical non-Docker local install — runs as a remote/hosted instance (e.g. Judge0 RapidAPI) configured purely via `JUDGE0_URL` + `JUDGE0_TOKEN`. Separately, `.omnix/` is removed entirely and Omnix is dropped from the list of AI tool adapters that point back to AGENTS.md (now: Claude Code, Cursor, Windsurf, Cline).
+- **Context:** User requested both removals explicitly as a "huge change" for this session. Confirmed via AskUserQuestion: (1) Docker removal must come with local-install replacement instructions, not just file deletion; (2) all `.omnix` references should be stripped from docs/config, not just the folder.
+- **Why:** Simplifies local development — no Docker Desktop dependency on Windows, no docker-compose stack to keep in sync. `application.yml` was already fully env-var driven with localhost defaults, so this is a pure infra/docs change with zero backend code changes (`./mvnw compile` confirmed passing unchanged).
+- **What changed:**
+  - Deleted: `.omnix/` (entire dir), `infra/docker-compose.yml`, `infra/prometheus/`
+  - Updated: `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, `.cursor/AGENTS.md`, `.cursor/MEMORY-WORKFLOW.md`, `STARTUP_PROTOCOL.md`, `.gitignore`, `Makefile`, `README.md`, `infra/.env.example`, `docs/ROADMAP.md` — replaced Docker/Dockerfile/Nginx/Grafana/Prometheus sections with local-service equivalents and Spring Boot Actuator (`/actuator/health`, `/actuator/prometheus`) for metrics.
+- **Tradeoffs:** No containerized parity between dev/prod. Optional external Prometheus/Grafana can still scrape `/actuator/prometheus` if a future need arises — that endpoint was kept.
+- **Review date:** Revisit if the project later needs reproducible multi-service onboarding (e.g. onboarding many contributors) — Docker Compose could be reintroduced as an opt-in convenience, not a requirement.

@@ -1,6 +1,6 @@
 ---
 type: active-goals
-updated: 2026-05-24
+updated: 2026-06-11
 tags: [goals, roadmap]
 ---
 
@@ -160,17 +160,13 @@ tags: [goals, roadmap]
 ## Week 5 — Observability + CI/CD + Polish
 **Period:** 2026-06-22 → 2026-06-28
 
-- [ ] Custom Prometheus metrics (submission counters, eval duration histogram, queue gauge)
-- [ ] Grafana dashboard provisioning (6 panels)
+- [ ] Custom metrics via Spring Boot Actuator + Micrometer (submission counters, eval duration histogram, queue gauge), exposed at `/actuator/prometheus`
 - [ ] SubmissionEvaluationIntegrationTest (full flow)
 - [ ] ContestLifecycleIntegrationTest
-- [ ] backend/Dockerfile + frontend/Dockerfile
-- [ ] infra/nginx/default.conf
 - [ ] .github/workflows/backend-ci.yml
 - [ ] .github/workflows/frontend-ci.yml
-- [ ] .github/workflows/docker-ci.yml
 - [ ] Final polish: no TODOs, all env vars in .env.example, Swagger complete
-- [ ] `docker compose up --build` — all services start, full flow works
+- [ ] Full stack runs locally with PostgreSQL/Redis/RabbitMQ as native services + Judge0 CE remote/hosted instance — full flow works
 - [ ] README quick-start verified from fresh clone
 
 ---
@@ -181,9 +177,7 @@ tags: [goals, roadmap]
 - [x] pom.xml with all backend dependencies (Java 21, Spring Boot 3.3, all modules)
 - [x] application.yml — env-var-based config
 - [x] frontend package.json + vite.config.ts + tsconfig.json + tailwind.config.ts
-- [x] Docker Compose — all 8 infrastructure services
-- [x] Prometheus scrape config
-- [x] infra/.env.example
+- [x] infra/.env.example (local services + Judge0 remote/hosted, no Docker — D-009)
 - [x] Makefile (10 targets)
 - [x] Enterprise README.md
 - [x] AI agent infrastructure — AGENTS.md, CLAUDE.md, AI_RULES.md, STARTUP_PROTOCOL.md, PROJECT_CONTEXT.md
@@ -195,7 +189,7 @@ tags: [goals, roadmap]
 - [x] .claude/agents/README.md — subagent patterns
 - [x] .claude/skills/README.md — skill invocation guide
 - [x] .claude/.mcp.json — MCP placeholder
-- [x] .omnix/ agents/commands/workflows/memory READMEs — populated
+- [x] .omnix/ removed — Omnix dropped as AI tool adapter (D-009, 2026-06-11)
 - [x] .cursor/agents/security-review.md — 8-section security audit runbook
 - [x] docs/ROADMAP.md — full 5-week build spec with file order, SQL blueprints, acceptance criteria
 - [x] AGENTS.md updated — ROADMAP ref, test discipline, shutdown git push mandate

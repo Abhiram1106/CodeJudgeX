@@ -45,7 +45,7 @@ Switch to `minimal` for one-liner answers or quick lookups.
 ## Vault shutdown — AUTOMATIC, no consent needed
 
 At the end of every chat, the Stop hook in `.claude/settings.json` automatically:
-1. Stages all vault + config files (`.obsidian-ai-memory/`, `AGENTS.md`, `CLAUDE.md`, `.claude/`, `.cursor/`, `.omnix/`)
+1. Stages all vault + config files (`.obsidian-ai-memory/`, `AGENTS.md`, `CLAUDE.md`, `.claude/`, `.cursor/`)
 2. Commits with `memory: YYYY-MM-DD HH:MM claude — auto session commit`
 3. Pushes to `origin HEAD`
 

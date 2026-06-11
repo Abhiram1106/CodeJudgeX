@@ -1,7 +1,7 @@
 # AGENTS.md — CodeJudgeX
 
 > Single source of truth for every AI tool adapter on this project.
-> Every tool (Claude Code, Cursor, Omnix, Windsurf, Cline) points back here.
+> Every tool (Claude Code, Cursor, Windsurf, Cline) points back here.
 > Read this file at the start of every session before any response or edit.
 
 ---
@@ -119,12 +119,12 @@ TASK-TYPE OVERRIDES (read additionally based on what was requested):
 - The `@/` path alias maps to `src/` — always use it
 - Submission polling: `refetchInterval` MUST stop when status is in `TERMINAL_STATUSES`
 
-### Infrastructure / Docker
+### Infrastructure / Local services (no Docker)
 
 - All secrets via environment variables from `infra/.env` (never committed — only `.env.example`)
-- Docker Compose services must have health checks and restart policies
+- PostgreSQL, Redis, and RabbitMQ run as natively installed local services (Windows services / Homebrew / apt)
+- Judge0 CE runs as a **remote/hosted instance** (e.g. Judge0 RapidAPI or a separately hosted Judge0 server) configured via `JUDGE0_URL` + `JUDGE0_TOKEN` — Spring Boot must never exec user code directly
 - Never run database migrations against production without explicit user confirmation
-- Judge0 CE handles all code execution — Spring Boot must never exec user code directly
 
 ---
 
@@ -160,13 +160,12 @@ TASK-TYPE OVERRIDES (read additionally based on what was requested):
 | Evaluation worker | RabbitMQ consumer + Judge0 | `backend/src/main/java/com/codejudgex/evaluation/` |
 | Leaderboard | Redis sorted sets | `backend/src/main/java/com/codejudgex/leaderboard/` |
 | Plagiarism | JPlag | `backend/src/main/java/com/codejudgex/plagiarism/` |
-| Primary DB | PostgreSQL 16 | `infra/docker-compose.yml` |
-| Cache | Redis 7 | `infra/docker-compose.yml` |
-| Queue | RabbitMQ 3 | `infra/docker-compose.yml` |
-| Code execution | Judge0 CE | `infra/docker-compose.yml` |
-| Monitoring | Prometheus + Grafana | `infra/prometheus/` + `infra/grafana/` |
+| Primary DB | PostgreSQL 16 (local install) | configured via `infra/.env` |
+| Cache | Redis 7 (local install) | configured via `infra/.env` |
+| Queue | RabbitMQ 3 (local install) | configured via `infra/.env` |
+| Code execution | Judge0 CE (remote/hosted instance) | configured via `infra/.env` |
 | Migrations | Flyway | `backend/src/main/resources/db/migration/` |
-| Infra config | Docker Compose | `infra/` |
+| Infra config | Environment template | `infra/.env.example` |
 | Build plan | ROADMAP | `docs/ROADMAP.md` |
 | Design documents | Markdown | `docs/` |
 | Memory vault | Obsidian-compatible | `.obsidian-ai-memory/` |
@@ -204,7 +203,7 @@ STEP A — Write vault files (do this BEFORE the hook fires):
   6. If architecture changed → update 05-ARCHITECTURE/system-overview.md
 
 STEP B — The Stop hook auto-executes (no action needed from you):
-  git add .obsidian-ai-memory/ AGENTS.md CLAUDE.md .claude/ .cursor/ .omnix/
+  git add .obsidian-ai-memory/ AGENTS.md CLAUDE.md .claude/ .cursor/
   git commit -m "memory: YYYY-MM-DD HH:MM claude — auto session commit"
   git push origin HEAD
 ```
@@ -242,9 +241,9 @@ The digest gives the user a complete picture WITHOUT them having to open any vau
 - ...
 
 ### 🧪 What you should test / verify manually
-- <specific curl commands, browser URLs, Docker checks, Swagger endpoints to hit>
+- <specific curl commands, browser URLs, local service checks, Swagger endpoints to hit>
 - Example: POST /api/v1/auth/register with {name, email, password} → expect 201 + access token
-- Example: docker compose logs backend | grep "Flyway" → expect "Successfully applied 9 migrations"
+- Example: backend startup logs → expect "Successfully applied N migrations" (Flyway)
 - ...
 
 ### ⚠️ Open risks / known issues

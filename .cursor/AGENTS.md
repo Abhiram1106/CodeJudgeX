@@ -57,7 +57,7 @@ Follow `.cursor/MEMORY-WORKFLOW.md` exactly — no abbreviations.
 At every chat end, commit and push vault files **without asking the user**:
 
 ```bash
-git add .obsidian-ai-memory/ AGENTS.md CLAUDE.md .claude/ .cursor/ .omnix/
+git add .obsidian-ai-memory/ AGENTS.md CLAUDE.md .claude/ .cursor/
 git commit -m "memory: YYYY-MM-DD HH:MM cursor — <summary>"
 git push origin HEAD
 ```

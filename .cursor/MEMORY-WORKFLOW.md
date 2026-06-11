@@ -12,10 +12,10 @@
 Commit and push vault files at the end of every chat without asking the user.
 This is mandatory. No exceptions. No "should I push?" No waiting.
 
-Vault files = `.obsidian-ai-memory/`, `AGENTS.md`, `CLAUDE.md`, `.claude/`, `.cursor/`, `.omnix/`
+Vault files = `.obsidian-ai-memory/`, `AGENTS.md`, `CLAUDE.md`, `.claude/`, `.cursor/`
 
 ```bash
-git add .obsidian-ai-memory/ AGENTS.md CLAUDE.md .claude/ .cursor/ .omnix/
+git add .obsidian-ai-memory/ AGENTS.md CLAUDE.md .claude/ .cursor/
 git commit -m "memory: YYYY-MM-DD HH:MM cursor — <one-line summary>"
 git push origin HEAD
 ```
@@ -76,7 +76,7 @@ If modules, packages, data flows, or technology choices changed, update `.obsidi
 ### Step 7 — VAULT COMMIT + PUSH (automatic, no consent)
 
 ```bash
-git add .obsidian-ai-memory/ AGENTS.md CLAUDE.md .claude/ .cursor/ .omnix/
+git add .obsidian-ai-memory/ AGENTS.md CLAUDE.md .claude/ .cursor/
 git commit -m "memory: YYYY-MM-DD HH:MM cursor — <summary>"
 git push origin HEAD
 ```
