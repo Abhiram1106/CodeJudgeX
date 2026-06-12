@@ -119,3 +119,21 @@ tags: [decisions, adr]
   - Updated: `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, `.cursor/AGENTS.md`, `.cursor/MEMORY-WORKFLOW.md`, `STARTUP_PROTOCOL.md`, `.gitignore`, `Makefile`, `README.md`, `infra/.env.example`, `docs/ROADMAP.md` — replaced Docker/Dockerfile/Nginx/Grafana/Prometheus sections with local-service equivalents and Spring Boot Actuator (`/actuator/health`, `/actuator/prometheus`) for metrics.
 - **Tradeoffs:** No containerized parity between dev/prod. Optional external Prometheus/Grafana can still scrape `/actuator/prometheus` if a future need arises — that endpoint was kept.
 - **Review date:** Revisit if the project later needs reproducible multi-service onboarding (e.g. onboarding many contributors) — Docker Compose could be reintroduced as an opt-in convenience, not a requirement.
+
+---
+
+## D-010 — Reinstate full Docker Compose (supersedes D-009)
+
+- **Date:** 2026-06-12
+- **Status:** Active — supersedes D-009
+- **Decision:** The project now runs as a single full-stack `docker-compose.yml` (`infra/docker-compose.yml`): PostgreSQL, Redis, RabbitMQ, Judge0 CE (self-hosted `judge0-server` + `judge0-workers`), MailHog, Prometheus, Grafana, the Spring Boot backend, and the React frontend (served via Nginx). One command (`docker compose up` / `make up`) starts everything.
+- **Context:** User explored whether Docker was mandatory (it isn't — only Judge0 CE realistically needs containerization for self-hosting), then a hybrid "Judge0-only Docker" option, then explicitly chose full reversal: "Can you use docker for all" → confirmed via AskUserQuestion as "Full docker-compose: infra + Judge0 + backend + frontend." This reverses D-009 less than 24 hours after it was recorded.
+- **Why:** Simplifies onboarding to a single command and gives dev/prod parity across all services, at the cost of requiring Docker Desktop on Windows dev machines (the tradeoff D-009 was explicitly trying to avoid).
+- **What changed:**
+  - Created: `infra/docker-compose.yml`, `infra/prometheus/prometheus.yml`, `backend/Dockerfile`, `backend/.dockerignore`, `frontend/Dockerfile`, `frontend/.dockerignore`, `frontend/nginx/default.conf`
+  - Updated: `infra/.env.example` (Docker service hostnames + native fallback documented), `Makefile` (`up`, `down`, `build-images`, `logs`, `infra-up`, `infra-down` targets added alongside existing native targets), `README.md` (Infrastructure table, Quick Start rewritten for `docker compose up` with a "Native Development" subsection retained, Repository Structure tree updated)
+  - No change needed: `application.yml` (already fully env-var driven with localhost defaults — container hostnames are supplied via compose env vars, not code), `.gitignore` (docker volumes already covered by existing ignores)
+  - Pending in this session: `docs/ROADMAP.md` Dockerfile/Nginx/CI sections, `AGENTS.md` stack map + infra rules section
+- **Tradeoffs:** Docker Desktop required on Windows dev machines again. Native development path is preserved via `make infra-up` (starts only infra services in Docker) + `make backend` / `make frontend` for fast iteration.
+- **Principle preserved from D-005:** Spring Boot still never execs user code directly — Judge0 CE (now self-hosted via `judge0-server`/`judge0-workers` containers) remains the sandbox.
+- **Review date:** None — this is the current direction unless the user requests another reversal.

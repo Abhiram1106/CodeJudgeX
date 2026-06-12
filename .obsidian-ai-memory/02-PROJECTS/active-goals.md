@@ -177,8 +177,10 @@ tags: [goals, roadmap]
 - [x] pom.xml with all backend dependencies (Java 21, Spring Boot 3.3, all modules)
 - [x] application.yml — env-var-based config
 - [x] frontend package.json + vite.config.ts + tsconfig.json + tailwind.config.ts
-- [x] infra/.env.example (local services + Judge0 remote/hosted, no Docker — D-009)
-- [x] Makefile (10 targets)
+- [x] infra/.env.example (Docker hostnames + native localhost fallback — D-010, supersedes D-009)
+- [x] Makefile (Docker + native targets — D-010)
+- [x] infra/docker-compose.yml (full stack: infra + Judge0 + backend + frontend — D-010)
+- [x] backend/Dockerfile + frontend/Dockerfile + frontend/nginx/default.conf (D-010)
 - [x] Enterprise README.md
 - [x] AI agent infrastructure — AGENTS.md, CLAUDE.md, AI_RULES.md, STARTUP_PROTOCOL.md, PROJECT_CONTEXT.md
 - [x] Cursor adapter — 6 .mdc rules, 4 agent recipes, 4 context packs

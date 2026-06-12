@@ -47,7 +47,7 @@ tags: [continuity, handoff]
   changes required** for this cleanup.
 - Decision recorded as D-009 in `04-DECISIONS/decisions.md`.
 
-### Rules engine update + repo cleanup completed THIS session (2026-06-12)
+### Rules engine update + repo cleanup completed (2026-06-12, earlier session)
 
 - **AGENTS.md rule #12 added**: commit + `git push origin HEAD` are one atomic step,
   no separate push-confirmation once commit consent is given. Cascaded to CLAUDE.md,
@@ -61,19 +61,50 @@ tags: [continuity, handoff]
   untracked/gitignored — no code commit needed.
 - `./mvnw compile -q` → exit 0, `npm run typecheck` → exit 0 after cleanup.
 
+### D-010: Docker reinstated — full docker-compose stack (THIS session, 2026-06-12)
+
+D-009 (Docker removal, <24h old) was reversed at user request. The project now runs
+fully via `infra/docker-compose.yml` (`make up`):
+
+- **New files**: `infra/docker-compose.yml` (postgres, redis, rabbitmq, judge0-db,
+  judge0-redis, judge0-server `1.13.1` w/ `privileged: true`, judge0-workers,
+  mailhog, prometheus, grafana, backend, frontend — all with healthchecks),
+  `infra/prometheus/prometheus.yml` (scrapes `backend:8080/api/v1/actuator/prometheus`),
+  `backend/Dockerfile` + `.dockerignore` (multi-stage JDK→JRE alpine),
+  `frontend/Dockerfile` + `.dockerignore` + `frontend/nginx/default.conf`
+  (multi-stage Node→Nginx, proxies `/api/`, `/api/v1/swagger-ui/`, `/api/v1/api-docs`
+  to `backend:8080`).
+- **Updated**: `infra/.env.example` (Docker hostnames primary, native localhost
+  fallback documented), `Makefile` (`up`/`down`/`build-images`/`logs`/`infra-up`/
+  `infra-down` added, native targets kept), `README.md` (Infrastructure table,
+  Quick Start rewritten for `docker compose up` + "Native Development" subsection,
+  Repository Structure tree updated), `docs/ROADMAP.md` (Week 5 Dockerfiles/Nginx/CI
+  sections restored with our actual multi-stage builds, stack header, risk register
+  rows for Judge0 `privileged: true` and CI), `AGENTS.md` (Infrastructure section
+  renamed "Docker Compose (D-010)", stack map rows for Postgres/Redis/RabbitMQ/Judge0
+  now point at `infra/docker-compose.yml`).
+- **No change needed**: `application.yml` (already fully env-var driven —
+  hostnames come from compose env vars, not code), `.gitignore` (docker volumes
+  already covered).
+- D-010 recorded in `04-DECISIONS/decisions.md`, supersedes D-009.
+- Verified: `./mvnw compile -q` → exit 0, `npm run typecheck` → exit 0,
+  `docker compose -f infra/docker-compose.yml config -q` → exit 0 (valid syntax,
+  Docker not run end-to-end — no images built/tested in this session).
+
 ### What's NOT done
 
 - Frontend: foundation exists (untracked, uncommitted) but feature pages (Week 4 list) not built
 - EvaluationWorker unit test (needs Judge0Client mock)
 - Week 3: rate limiting, security headers, CORS hardening, audit module, plagiarism module, admin module
+- Docker stack has NOT been run end-to-end (`make up`) — only `docker compose config` syntax-validated. First real run may surface issues (Judge0 privileged mode on Windows/WSL2, image pulls, healthcheck timing, Nginx proxy paths).
 
 ---
 
 ## Immediate Next Steps (in order)
 
-1. Fix `infra/.env.example` Judge0 comment ("local install" → "remote/hosted") for consistency with README
+1. Run `make up` (or `docker compose -f infra/docker-compose.yml up -d --build`) end-to-end at least once; fix any issues (image pulls, healthcheck timing, Judge0 privileged mode under Docker Desktop/WSL2, Nginx proxy paths)
 2. Resume Week 3 (`active-goals.md`): Redis rate limiting → CORS/security headers → audit module → plagiarism → admin
-3. Week 5: Actuator/Micrometer metrics + integration tests per `docs/ROADMAP.md`
+3. Week 5: Actuator/Micrometer metrics + integration tests per `docs/ROADMAP.md` (metrics endpoint path now `/api/v1/actuator/prometheus`)
 
 ---
 
@@ -83,7 +114,8 @@ tags: [continuity, handoff]
 - `AuthorizationDeniedException` from `@PreAuthorize` bypasses security filter — must be handled in `GlobalExceptionHandler`, not just `accessDeniedHandler`
 - IDE (NetBeans/VSCode Java LS) shows false Lombok errors — Maven compile is the only ground truth
 - Redis ZADD always overwrites — if student re-submits with lower score, leaderboard may decrease; add best-score guard before ZADD
-- `infra/.env.example` Judge0 comment currently says "local install" — should say "remote/hosted" (cosmetic, not blocking)
+- Docker build context constraint: a service's Dockerfile `COPY` source paths are relative to its `context:` dir in docker-compose and cannot reference `../` paths outside it (this is why `nginx/default.conf` lives in `frontend/nginx/`, not `infra/nginx/`)
+- Actuator path under Docker/native is `/api/v1/actuator/...` (context-path `/api/v1` + management base-path `/actuator`) — Prometheus scrape config and Nginx proxy rules must include the `/api/v1` prefix
 
 ---
 
@@ -99,5 +131,6 @@ tags: [continuity, handoff]
 | Leaderboard service | `backend/src/main/java/com/codejudgex/leaderboard/service/LeaderboardService.java` |
 | Notification worker | `backend/src/main/java/com/codejudgex/notification/service/NotificationWorker.java` |
 | Flyway migrations | `backend/src/main/resources/db/migration/` (V1–V10) |
-| Build plan | `docs/ROADMAP.md` (Docker-free as of 2026-06-11) |
-| Env template | `infra/.env.example` (local services + Judge0 remote/hosted) |
+| Build plan | `docs/ROADMAP.md` (full Docker Compose as of 2026-06-12, D-010) |
+| Compose stack | `infra/docker-compose.yml` (D-010) |
+| Env template | `infra/.env.example` (Docker hostnames + native localhost fallback) |
