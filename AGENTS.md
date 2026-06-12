@@ -85,6 +85,7 @@ TASK-TYPE OVERRIDES (read additionally based on what was requested):
 9. **Record assumptions.** Unstated assumptions go in the digest under "Assumptions Made".
 10. **Small changes over large rewrites.** Prefer safe, incremental changes.
 11. **Consult ROADMAP first for any build task.** `docs/ROADMAP.md` has the exact file order, SQL blueprints, and acceptance criteria for every module. Do not invent your own order.
+12. **Every commit is immediately followed by a push — no exceptions, no "later".** `git commit` and `git push origin HEAD` are ONE atomic step, always performed together in the same turn. Never leave a commit sitting unpushed "for the user to review first" or "to push later" — if the user has consented to the commit, that consent covers the push too. This applies to code commits, vault commits, and memory commits alike. A session is never "done" while any local commit is ahead of `origin/main`.
 
 ### Test discipline (enforced — not optional)
 
@@ -211,15 +212,20 @@ STEP B — The Stop hook auto-executes (no action needed from you):
 ### CODE SHUTDOWN — REQUIRES USER CONSENT
 
 Application files (backend/, frontend/, infra/, docs/) are NEVER committed automatically.
-Always ask the user before committing or pushing code changes.
+Always ask the user before committing code changes — but the push is NOT a separate ask.
 
 ```
 STEP C — Ask user: "Ready to commit code changes?"
   If yes:
     git add backend/ frontend/ infra/ docs/
     git commit -m "feat|fix|refactor|docs(scope): description"
-    git push origin HEAD   ← also ask before pushing code
+    git push origin HEAD   ← runs immediately, same turn, no extra confirmation
 ```
+
+Consent to commit IS consent to push. Do not stop after `git commit` and ask
+"want me to push now?" — that question has already been answered by "yes" to
+STEP C. The only exception is if the user explicitly says "commit but don't
+push yet."
 
 ### END-OF-SESSION DIGEST — MANDATORY IN EVERY FINAL REPLY
 

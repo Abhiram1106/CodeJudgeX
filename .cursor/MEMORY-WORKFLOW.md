@@ -23,14 +23,17 @@ git push origin HEAD
 ### CODE SHUTDOWN — REQUIRES USER CONSENT
 
 Application files (`backend/`, `frontend/`, `infra/`, `docs/`) are NEVER committed automatically.
-Always ask the user explicitly before committing or pushing code.
+Always ask the user explicitly before committing code — the push is not a separate ask.
 
 ```bash
 # Only after user says yes:
 git add backend/ frontend/ infra/ docs/
 git commit -m "feat|fix|refactor|docs(scope): description"
-git push origin HEAD
+git push origin HEAD   # same turn, no extra confirmation
 ```
+
+Commit and push are one atomic step. Don't stop after `git commit` to ask
+"want me to push?" — that's already covered by the commit consent.
 
 ---
 
@@ -87,7 +90,7 @@ Do not ask. Do not wait. Execute immediately.
 
 Ask: *"Ready to commit the code changes?"*
 
-If yes:
+If yes — commit AND push together, no separate push confirmation:
 ```bash
 git add backend/ frontend/ infra/ docs/
 git commit -m "feat|fix|refactor|docs(scope): description"

@@ -70,6 +70,11 @@ Application files (`backend/`, `frontend/`, `infra/`, `docs/`) are **NEVER commi
 
 Always ask: *"Ready to commit the code changes?"* before staging or committing these paths.
 
+**Commit and push are one atomic step.** Once the user says yes, run
+`git commit` then `git push origin HEAD` immediately in the same turn — push
+is not a separate ask. A commit left unpushed is an incomplete task. Skip the
+push only if the user explicitly says "commit but don't push yet."
+
 ### Two-commit rule
 
 Vault commits and code commits are always separate.

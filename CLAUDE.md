@@ -63,6 +63,12 @@ Before the hook fires, you MUST have already written:
 Application files (`backend/`, `frontend/`, `infra/`, `docs/`) are NEVER committed automatically.
 Always ask: *"Ready to commit the code changes?"* before staging or committing them.
 
+**Commit and push are one atomic step (AGENTS.md rule #12).** Once the user
+says yes, run `git commit` followed immediately by `git push origin HEAD` in
+the same turn — do not pause afterward to ask "should I push now?". A commit
+left unpushed at end of session is an incomplete task. Only skip the push if
+the user explicitly says "commit but don't push yet."
+
 ## End-of-session digest — MANDATORY in every final reply
 
 Before anything else in your final reply, output the full session digest directly to the user.
