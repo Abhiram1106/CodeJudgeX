@@ -4,7 +4,7 @@
 > This document is the authoritative build plan. Agents read it at session start to understand what to build next, in what order, and why.
 >
 > **Timeline:** 5 weeks · 2026-05-25 → 2026-06-28
-> **Stack:** Java 21 + Spring Boot 3.3 · React 18 + Vite · PostgreSQL · Redis · RabbitMQ · Judge0 CE (remote/hosted) — local services, no Docker
+> **Stack:** Java 21 + Spring Boot 3.3 · React 18 + Vite · PostgreSQL · Redis · RabbitMQ · Judge0 CE (self-hosted) — full stack via Docker Compose (`make up`)
 
 ---
 
@@ -575,21 +575,78 @@ ContestLifecycleIntegrationTest:
   - create contest → add problems → register student → submit → leaderboard updates
 ```
 
+#### Dockerfiles
+
+**`backend/Dockerfile`** (multi-stage: build jar with Maven, run on JRE):
+```dockerfile
+FROM eclipse-temurin:21-jdk-alpine AS build
+WORKDIR /app
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+RUN ./mvnw dependency:go-offline -q
+COPY src/ src/
+RUN ./mvnw clean package -DskipTests -q
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+**`frontend/Dockerfile`** (multi-stage: build with Vite, serve via Nginx):
+```dockerfile
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+```
+
+#### Nginx configuration (`frontend/nginx/default.conf`)
+
+Reverse-proxies `/api/*` and Swagger UI to the `backend` service (container hostname),
+and serves the SPA with `try_files` fallback for client-side routing:
+
+```nginx
+upstream backend {
+    server backend:8080;
+}
+
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location /api/ { proxy_pass http://backend; }
+    location /api/v1/swagger-ui/ { proxy_pass http://backend; }
+    location /api/v1/api-docs { proxy_pass http://backend; }
+    location / { try_files $uri $uri/ /index.html; }
+}
+```
+
 #### GitHub Actions CI (`/github/workflows/`)
 
 **`backend-ci.yml`:** checkout → setup Java 21 → `./mvnw test` → `./mvnw clean package -DskipTests`
 **`frontend-ci.yml`:** checkout → setup Node 20 → `npm ci` → `npm run typecheck` → `npm run lint` → `npm run build`
+**`docker-ci.yml`:** checkout → `docker compose -f infra/docker-compose.yml build` → validate compose config
 
 #### Final polish checklist
 - [ ] All `TODO` comments removed or linked to a GitHub issue
 - [ ] No hardcoded values — all via env vars (verify with `grep -r "localhost" src/`)
 - [ ] `infra/.env.example` has every required variable with description
-- [ ] Swagger UI accessible at `/swagger-ui.html` with all endpoints documented
-- [ ] README quick-start works from a fresh clone using local services (PostgreSQL, Redis, RabbitMQ) and a Judge0 CE remote/hosted instance
+- [ ] Swagger UI accessible at `/api/v1/swagger-ui.html` with all endpoints documented
+- [ ] README quick-start works from a fresh clone: `docker compose -f infra/docker-compose.yml up -d --build` (or `make up`)
 - [ ] `./mvnw clean package` succeeds (no test failures)
 - [ ] `npm run build` succeeds (no type errors, no lint errors)
 
-**Week 5 done when:** backend and frontend run against local PostgreSQL, Redis, and RabbitMQ services plus a Judge0 CE remote/hosted instance, full contest lifecycle works end-to-end, `/actuator/health` and `/actuator/prometheus` report correctly, CI pipeline goes green.
+**Week 5 done when:** `make up` starts the full stack (Postgres, Redis, RabbitMQ, Judge0, MailHog, backend, frontend, Prometheus, Grafana), full contest lifecycle works end-to-end, `/api/v1/actuator/health` and `/api/v1/actuator/prometheus` report correctly, Grafana dashboard loads with real data, CI pipeline goes green.
 
 ---
 
@@ -597,12 +654,12 @@ ContestLifecycleIntegrationTest:
 
 | Risk | Probability | Impact | Mitigation |
 |---|---|---|---|
-| Judge0 CE has no practical non-Docker local install | High | High | Use a remote/hosted Judge0 instance (e.g. Judge0 RapidAPI) configured via `JUDGE0_URL` + `JUDGE0_TOKEN`; test early in Week 2 |
+| Judge0 CE requires `privileged: true` container (sandboxing via isolate) | Medium | Medium | `judge0-server`/`judge0-workers` run with `privileged: true` in `infra/docker-compose.yml`; document this requirement for any host running the stack |
 | JPlag memory usage on large contest (>500 submissions) | Medium | Medium | Run JPlag async via queue; set JVM heap limit on worker; defer to Week 3 |
 | RabbitMQ message loss on worker crash | Medium | High | durable queues + manual ack + idempotent consumer (check submission status before processing) |
 | Redis eviction during contest causing leaderboard loss | Low | High | Set `maxmemory-policy noeviction` for leaderboard Redis; PG snapshot every 5 min |
 | Frontend polling overwhelming API under load | Medium | Medium | `/submissions/{id}/status` endpoint cached in Redis (TTL 2s); stop polling on terminal status |
-| No CI/CD until Week 5 | Certain | Low | Manual test each module at end of its week against locally running services |
+| No CI/CD until Week 5 | Certain | Low | Manual test each module at end of its week against `make infra-up` (Docker infra) + native backend/frontend |
 | Monaco editor SSR/Vite chunk size | Low | Low | Lazy-load Monaco with `React.lazy` + `Suspense`; specify `height` always |
 
 ---

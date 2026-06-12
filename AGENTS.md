@@ -120,11 +120,12 @@ TASK-TYPE OVERRIDES (read additionally based on what was requested):
 - The `@/` path alias maps to `src/` — always use it
 - Submission polling: `refetchInterval` MUST stop when status is in `TERMINAL_STATUSES`
 
-### Infrastructure / Local services (no Docker)
+### Infrastructure / Docker Compose (D-010)
 
 - All secrets via environment variables from `infra/.env` (never committed — only `.env.example`)
-- PostgreSQL, Redis, and RabbitMQ run as natively installed local services (Windows services / Homebrew / apt)
-- Judge0 CE runs as a **remote/hosted instance** (e.g. Judge0 RapidAPI or a separately hosted Judge0 server) configured via `JUDGE0_URL` + `JUDGE0_TOKEN` — Spring Boot must never exec user code directly
+- Full stack runs via `infra/docker-compose.yml` (`make up`): PostgreSQL, Redis, RabbitMQ, Judge0 CE (`judge0-server` + `judge0-workers`, self-hosted), MailHog, Prometheus, Grafana, backend, frontend
+- Judge0 CE is **self-hosted** via Docker (`judge0-server` + `judge0-workers`, `privileged: true` for sandboxing) — Spring Boot must never exec user code directly
+- Native development (`make infra-up` for infra only + `make backend` / `make frontend`) remains supported for fast iteration
 - Never run database migrations against production without explicit user confirmation
 
 ---
@@ -161,12 +162,12 @@ TASK-TYPE OVERRIDES (read additionally based on what was requested):
 | Evaluation worker | RabbitMQ consumer + Judge0 | `backend/src/main/java/com/codejudgex/evaluation/` |
 | Leaderboard | Redis sorted sets | `backend/src/main/java/com/codejudgex/leaderboard/` |
 | Plagiarism | JPlag | `backend/src/main/java/com/codejudgex/plagiarism/` |
-| Primary DB | PostgreSQL 16 (local install) | configured via `infra/.env` |
-| Cache | Redis 7 (local install) | configured via `infra/.env` |
-| Queue | RabbitMQ 3 (local install) | configured via `infra/.env` |
-| Code execution | Judge0 CE (remote/hosted instance) | configured via `infra/.env` |
+| Primary DB | PostgreSQL 16 (Docker Compose) | `infra/docker-compose.yml` |
+| Cache | Redis 7 (Docker Compose) | `infra/docker-compose.yml` |
+| Queue | RabbitMQ 3 (Docker Compose) | `infra/docker-compose.yml` |
+| Code execution | Judge0 CE (self-hosted, Docker Compose) | `infra/docker-compose.yml` |
 | Migrations | Flyway | `backend/src/main/resources/db/migration/` |
-| Infra config | Environment template | `infra/.env.example` |
+| Infra config | Environment template + Compose | `infra/.env.example`, `infra/docker-compose.yml` |
 | Build plan | ROADMAP | `docs/ROADMAP.md` |
 | Design documents | Markdown | `docs/` |
 | Memory vault | Obsidian-compatible | `.obsidian-ai-memory/` |

@@ -238,10 +238,12 @@ Notification event published → Student notified
 
 | Component | Technology |
 |---|---|
-| PostgreSQL, Redis, RabbitMQ | Native local service installs |
-| Code execution | Judge0 CE (remote/hosted instance) |
-| Metrics | Spring Boot Actuator |
-| Email (dev) | Local SMTP debug server (e.g. MailHog) |
+| Orchestration | Docker Compose (`infra/docker-compose.yml`) |
+| PostgreSQL, Redis, RabbitMQ | Containerized services |
+| Code execution | Judge0 CE (self-hosted via Docker, `judge0-server` + `judge0-workers`) |
+| Metrics | Spring Boot Actuator + Prometheus + Grafana |
+| Email (dev) | MailHog (containerized) |
+| Reverse proxy | Nginx (serves frontend, proxies `/api/*` to backend) |
 
 ---
 
@@ -251,6 +253,8 @@ Notification event published → Student notified
 CodeJudgeX/
 │
 ├── backend/                              # Spring Boot application
+│   ├── Dockerfile                        # Multi-stage build (JDK → JRE)
+│   ├── .dockerignore
 │   ├── pom.xml                           # Maven build descriptor
 │   └── src/
 │       ├── main/
@@ -278,6 +282,10 @@ CodeJudgeX/
 │           └── java/com/codejudgex/     # Module-level tests
 │
 ├── frontend/                             # React + Vite application
+│   ├── Dockerfile                        # Multi-stage build (Node → Nginx)
+│   ├── .dockerignore
+│   ├── nginx/
+│   │   └── default.conf                  # Nginx reverse proxy config
 │   ├── index.html
 │   ├── package.json
 │   ├── vite.config.ts                    # Vite config + API proxy
@@ -313,6 +321,9 @@ CodeJudgeX/
 │       └── utils/                        # Formatting, validation helpers
 │
 ├── infra/                                # Infrastructure configuration
+│   ├── docker-compose.yml                # Full stack: infra + Judge0 + backend + frontend
+│   ├── prometheus/
+│   │   └── prometheus.yml                # Prometheus scrape config
 │   └── .env.example                      # Environment variable template
 │
 ├── docs/                                 # Architecture and design documents
@@ -356,41 +367,18 @@ module-name/
 
 | Tool | Minimum Version |
 |---|---|
-| Java JDK | 21 |
-| Maven | 3.9 |
-| Node.js | 20 |
-| npm | 10 |
-| PostgreSQL | 16 |
-| Redis | 7 |
-| RabbitMQ | 3 |
+| Docker | 24 |
+| Docker Compose | v2 (bundled with Docker Desktop) |
 
-CodeJudgeX runs entirely on natively installed local services — no Docker required.
+CodeJudgeX runs as a full Docker Compose stack — Postgres, Redis, RabbitMQ, Judge0 CE,
+the Spring Boot backend, and the React frontend (served via Nginx) all start with one command.
 
-### 1. Install Local Services
+> **Native (non-Docker) development is also supported** for faster backend/frontend
+> iteration — see [Native Development](#native-development) below. It requires
+> JDK 21, Maven 3.9, Node 20, and either Docker (for just the infra services) or
+> natively installed Postgres/Redis/RabbitMQ/Judge0.
 
-Install PostgreSQL 16, Redis 7, and RabbitMQ 3 for your OS:
-
-- **Windows**: install via the official installers, or `choco install postgresql redis-64 rabbitmq`
-- **macOS**: `brew install postgresql@16 redis rabbitmq`
-- **Linux (apt)**: `sudo apt install postgresql-16 redis-server rabbitmq-server`
-
-Start each service (Windows: via Services console or `net start`; macOS/Linux: `brew services start <name>` or `systemctl start <name>`).
-
-Create the application database and user:
-
-```bash
-psql -U postgres -c "CREATE DATABASE codejudgex;"
-psql -U postgres -c "CREATE USER codejudgex WITH PASSWORD 'secret';"
-psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE codejudgex TO codejudgex;"
-```
-
-RabbitMQ and Redis work out of the box with their default ports (5672 / 6379) and the default `guest`/`guest` RabbitMQ credentials for local development.
-
-### 2. Configure Judge0 CE
-
-Judge0 CE is required for code execution. Use a hosted Judge0 instance (e.g. the [Judge0 RapidAPI](https://rapidapi.com/judge0-official/api/judge0-ce) free tier) or any Judge0 server you already run elsewhere — point `JUDGE0_URL` (and `JUDGE0_TOKEN` if required) at it.
-
-### 3. Clone and Configure
+### 1. Clone and Configure
 
 ```bash
 git clone https://github.com/your-org/CodeJudgeX.git
@@ -401,45 +389,66 @@ cp infra/.env.example infra/.env
 
 # Edit infra/.env and set at minimum:
 # JWT_SECRET=<256-bit random string>
-# JUDGE0_URL / JUDGE0_TOKEN (see step 2)
 ```
 
-### 4. Run the Backend
+### 2. Start the Stack
 
 ```bash
-make backend
+make up
 # or directly:
-cd backend && ./mvnw spring-boot:run
+docker compose -f infra/docker-compose.yml up -d --build
 ```
 
-The API will start on `http://localhost:8080`. Swagger UI is available at `http://localhost:8080/swagger-ui`. Flyway runs migrations automatically on startup.
+This builds and starts: `postgres`, `redis`, `rabbitmq`, `judge0-db`, `judge0-redis`,
+`judge0-server`, `judge0-workers`, `mailhog`, `backend`, `frontend`, `prometheus`, `grafana`.
 
-### 5. Install Frontend Dependencies
+Flyway runs database migrations automatically on backend startup.
+
+### 3. Stop the Stack
 
 ```bash
-make frontend-install
+make down
 # or:
-cd frontend && npm install
+docker compose -f infra/docker-compose.yml down
 ```
-
-### 6. Run the Frontend
-
-```bash
-make frontend
-# or:
-cd frontend && npm run dev
-```
-
-The frontend will start on `http://localhost:5173` and proxy all `/api` requests to the backend.
 
 ### Service Endpoints
 
 | Service | URL | Credentials |
-|---|---|---|
-| Frontend | http://localhost:5173 | — |
-| Backend API | http://localhost:8080 | — |
-| Swagger UI | http://localhost:8080/swagger-ui | — |
-| RabbitMQ Management | http://localhost:15672 | guest / guest |
+| --- | --- | --- |
+| Frontend | <http://localhost> | — |
+| Backend API | <http://localhost:8080/api/v1> | — |
+| Swagger UI | <http://localhost:8080/api/v1/swagger-ui.html> | — |
+| RabbitMQ Management | <http://localhost:15672> | guest / guest |
+| Judge0 CE | <http://localhost:2358> | — |
+| MailHog | <http://localhost:8025> | — |
+| Prometheus | <http://localhost:9090> | — |
+| Grafana | <http://localhost:3001> | admin / admin (default) |
+
+---
+
+### Native Development
+
+For faster backend/frontend iteration without rebuilding Docker images each time:
+
+```bash
+# Start only infra services (postgres, redis, rabbitmq, judge0, mailhog) in Docker
+make infra-up
+
+# Run the backend natively
+make backend
+# or: cd backend && ./mvnw spring-boot:run
+
+# Install + run the frontend natively
+make frontend-install
+make frontend
+# or: cd frontend && npm install && npm run dev
+```
+
+The API starts on `http://localhost:8080`, Swagger UI at `http://localhost:8080/api/v1/swagger-ui.html`,
+and the frontend dev server on `http://localhost:5173` (proxies `/api` to the backend).
+
+`infra/.env.example` documents the env vars needed for native runs (all default to `localhost`).
 
 ---
 
