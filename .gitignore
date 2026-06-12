@@ -58,10 +58,6 @@ logs/
 .cursor/AGENTS.local.md
 .cursor/.local/
 
-# Omnix — runtime caches and per-session memory (not shared)
-.omnix/memory/
-.omnix/cache/
-
 # .remember — session runtime logs (auto-generated, not shared)
 .remember/logs/
 

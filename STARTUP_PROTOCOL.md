@@ -4,7 +4,7 @@
 
 ## Detect project markers
 
-Scan for: `.obsidian-ai-memory/` · `AGENTS.md` · `AI_RULES.md` · `.claude/` · `.cursor/` · `.omnix/`
+Scan for: `.obsidian-ai-memory/` · `AGENTS.md` · `AI_RULES.md` · `.claude/` · `.cursor/`
 
 If found → full protocol active.
 
