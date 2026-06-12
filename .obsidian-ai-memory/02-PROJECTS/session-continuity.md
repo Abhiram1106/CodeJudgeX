@@ -1,13 +1,13 @@
 ---
 type: session-continuity
-updated: 2026-06-11
+updated: 2026-06-12
 tool: claude-code
 tags: [continuity, handoff]
 ---
 
 # Session Continuity — CodeJudgeX
 
-**Last updated:** 2026-06-11 by claude-sonnet-4-6
+**Last updated:** 2026-06-12 by claude-sonnet-4-6
 **Branch:** main
 **Full suite:** 59/59 ✅ (unchanged this session — no code touched)
 
@@ -47,21 +47,33 @@ tags: [continuity, handoff]
   changes required** for this cleanup.
 - Decision recorded as D-009 in `04-DECISIONS/decisions.md`.
 
+### Rules engine update + repo cleanup completed THIS session (2026-06-12)
+
+- **AGENTS.md rule #12 added**: commit + `git push origin HEAD` are one atomic step,
+  no separate push-confirmation once commit consent is given. Cascaded to CLAUDE.md,
+  `.cursor/AGENTS.md`, `.cursor/MEMORY-WORKFLOW.md`. Persistent feedback memory saved.
+- **D-009 .omnix leftovers committed**: `.gitignore`, `STARTUP_PROTOCOL.md`, and all
+  remaining `.omnix/*` deletions — pushed.
+- **Repo decluttered**: removed root JVM crash dumps (`hs_err_pid*.log`,
+  `replay_pid*.log`), empty `infra/grafana/` + `infra/judge0/` (orphaned by Docker
+  removal), empty `.tours/`, unrelated `.github/java-upgrade/` + `.github/modernize/`
+  appmod scaffolding, and ~180 stale `.remember/logs/*.log` files. All were
+  untracked/gitignored — no code commit needed.
+- `./mvnw compile -q` → exit 0, `npm run typecheck` → exit 0 after cleanup.
+
 ### What's NOT done
 
 - Frontend: foundation exists (untracked, uncommitted) but feature pages (Week 4 list) not built
 - EvaluationWorker unit test (needs Judge0Client mock)
 - Week 3: rate limiting, security headers, CORS hardening, audit module, plagiarism module, admin module
-- Code push to remote (multiple uncommitted changes pending — see Open Risks)
 
 ---
 
 ## Immediate Next Steps (in order)
 
-1. Get user consent, then commit this session's docs/infra changes (see "Next 3 tasks" in
-   `01-SESSIONS/2026-06-11/session-1100-claude.md` for the exact file split)
-2. Fix `infra/.env.example` Judge0 comment ("local install" → "remote/hosted") for consistency with README
-3. Resume Week 3 (`active-goals.md`): Redis rate limiting → CORS/security headers → audit module → plagiarism → admin
+1. Fix `infra/.env.example` Judge0 comment ("local install" → "remote/hosted") for consistency with README
+2. Resume Week 3 (`active-goals.md`): Redis rate limiting → CORS/security headers → audit module → plagiarism → admin
+3. Week 5: Actuator/Micrometer metrics + integration tests per `docs/ROADMAP.md`
 
 ---
 
